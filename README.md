@@ -4,6 +4,7 @@ A firmware based on InfiniTime v1.16.0 that turns the PineTime into the best fit
 
 # A few features:
 
+OpenHaystack support
 
 Fitness rings (like Apple Watch)
 
