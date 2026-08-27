@@ -80,6 +80,7 @@
 #include "displayapp/screens/settings/SettingBedtime.h"
 #include "displayapp/screens/settings/SettingTiltParallax.h"
 #include "displayapp/screens/settings/SettingPauseRings.h"
+#include "displayapp/screens/settings/SettingSpiNor.h"
 #include "displayapp/screens/ActivityHistory.h"
 #include "displayapp/screens/WorldClock.h"
 #include "displayapp/screens/Mindfulness.h"
@@ -828,6 +829,9 @@ void DisplayApp::LoadScreen(Apps app, DisplayApp::FullRefreshDirections directio
       break;
     case Apps::SettingPauseRings:
       currentScreen = std::make_unique<Screens::SettingPauseRings>(settingsController);
+      break;
+    case Apps::SettingSpiNor:
+      currentScreen = std::make_unique<Screens::SettingSpiNor>(this, filesystem);
       break;
     case Apps::ActivityHistory:
       currentScreen = std::make_unique<Screens::ActivityHistory>(this, healthController, settingsController);

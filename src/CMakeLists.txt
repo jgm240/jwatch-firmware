@@ -467,6 +467,7 @@ list(APPEND SOURCE_FILES
         displayapp/screens/settings/SettingBedtime.cpp
         displayapp/screens/settings/SettingTiltParallax.cpp
         displayapp/screens/settings/SettingPauseRings.cpp
+        displayapp/screens/settings/SettingSpiNor.cpp
         displayapp/screens/settings/SettingPasscode.cpp
 
         ## Watch faces

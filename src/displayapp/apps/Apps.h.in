@@ -74,6 +74,7 @@ namespace Pinetime {
       Physics,
       ActivityHistory,
       SettingPauseRings,
+      SettingSpiNor,
       Error
     };
 
