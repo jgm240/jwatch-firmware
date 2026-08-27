@@ -23,3 +23,7 @@ Sleep tracking
 Ring streak tracking
 
 etc.
+
+# Flashing
+
+Use Gadgetbridge on Android, InfiniTimeOrg/InfiniLink on iOS, Watchmate or Siglo on Linux for flashing
