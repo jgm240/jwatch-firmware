@@ -1,6 +1,7 @@
 #pragma once
 
 #include <lvgl/src/lv_core/lv_obj.h>
+#include <array>
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -58,6 +59,20 @@ namespace Pinetime {
         lv_obj_t* label_time_ampm;
         lv_obj_t* label_date;
         Widgets::SecondsSquare secondsSquare;
+
+        // Opt-in (Settings > Watchface color > Weather effects) rain/snow particle drift
+        // behind the time, driven by the current weather condition. Plain lv_obj_t rectangles
+        // moved each tick, same idiom as RingsClosed's confetti - not a canvas, to avoid that
+        // approach's full-screen-sized RAM buffer.
+        enum class WeatherEffect : uint8_t { None, Rain, Snow };
+        static constexpr int weatherParticleCount = 10;
+        WeatherEffect currentWeatherEffect = WeatherEffect::None;
+        std::array<lv_obj_t*, weatherParticleCount> weatherParticles {};
+        std::array<lv_coord_t, weatherParticleCount> weatherParticleX {};
+        std::array<lv_coord_t, weatherParticleCount> weatherParticleY {};
+        std::array<lv_coord_t, weatherParticleCount> weatherParticleSpeed {};
+
+        void UpdateWeatherEffect();
 
         Widgets::NotificationIconComplication notificationComplication;
         Widgets::WeatherComplication weatherComplication;

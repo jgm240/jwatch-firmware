@@ -118,6 +118,9 @@ void QuickSettings::CreateActionButton(size_t slot, Widgets::QuickAction action)
     case Widgets::QuickAction::OpenSettings:
       lv_label_set_text_static(label, Symbols::settings);
       break;
+    case Widgets::QuickAction::Activity:
+      lv_label_set_text_static(label, Symbols::tachometer);
+      break;
   }
 }
 
@@ -170,6 +173,10 @@ void QuickSettings::OnButtonEvent(lv_obj_t* object) {
       case Widgets::QuickAction::OpenSettings:
         settingsController.SetSettingsMenu(0);
         app->StartApp(Apps::Settings, DisplayApp::FullRefreshDirections::Up);
+        break;
+
+      case Widgets::QuickAction::Activity:
+        app->StartApp(Apps::ActivityRings, DisplayApp::FullRefreshDirections::Up);
         break;
     }
     return;

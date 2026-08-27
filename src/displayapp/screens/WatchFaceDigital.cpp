@@ -95,6 +95,17 @@ WatchFaceDigital::WatchFaceDigital(Controllers::DateTime& dateTimeController,
   // around its 4 sides over 60 seconds.
   secondsSquare.Create(lv_scr_act(), Applications::Convert(settingsController.GetWatchFaceAccentColor()));
 
+  for (int i = 0; i < weatherParticleCount; i++) {
+    weatherParticles[i] = lv_obj_create(lv_scr_act(), nullptr);
+    lv_obj_set_size(weatherParticles[i], 3, 3);
+    lv_obj_set_style_local_border_width(weatherParticles[i], LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
+    lv_obj_set_style_local_radius(weatherParticles[i], LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
+    lv_obj_set_click(weatherParticles[i], false);
+    lv_obj_set_hidden(weatherParticles[i], true);
+    weatherParticleX[i] = static_cast<lv_coord_t>((i * (LV_HOR_RES / weatherParticleCount)) + (i % 3) * 5);
+    weatherParticleY[i] = static_cast<lv_coord_t>(-10 - (i * 18));
+  }
+
   taskRefresh = lv_task_create(RefreshTaskCallback, LV_DISP_DEF_REFR_PERIOD, LV_TASK_PRIO_MID, this);
   Refresh();
 }
@@ -110,6 +121,8 @@ void WatchFaceDigital::Refresh() {
   notificationComplication.Update();
 
   secondsSquare.SetValue(dateTimeController.Seconds());
+
+  UpdateWeatherEffect();
 
   uint8_t tiltStrength = settingsController.GetTiltParallaxStrength();
   lv_coord_t tiltX = TiltOffset(motionController.X(), tiltStrength);
@@ -166,4 +179,59 @@ void WatchFaceDigital::Refresh() {
   heartRateComplication.Update();
   stepsComplication.Update();
   weatherComplication.Update();
+}
+
+void WatchFaceDigital::UpdateWeatherEffect() {
+  WeatherEffect targetEffect = WeatherEffect::None;
+
+  if (settingsController.GetWeatherEffectsEnabled()) {
+    auto currentWeather = weatherService.Current();
+    if (currentWeather.has_value()) {
+      switch (currentWeather->iconId) {
+        case Controllers::SimpleWeatherService::Icons::CloudShowerHeavy:
+        case Controllers::SimpleWeatherService::Icons::CloudSunRain:
+        case Controllers::SimpleWeatherService::Icons::Thunderstorm:
+          targetEffect = WeatherEffect::Rain;
+          break;
+        case Controllers::SimpleWeatherService::Icons::Snow:
+          targetEffect = WeatherEffect::Snow;
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  if (targetEffect != currentWeatherEffect) {
+    currentWeatherEffect = targetEffect;
+    bool active = currentWeatherEffect != WeatherEffect::None;
+    lv_color_t color = (currentWeatherEffect == WeatherEffect::Snow) ? LV_COLOR_WHITE : lv_color_hex(0x3a8fd9);
+    lv_coord_t baseSpeed = (currentWeatherEffect == WeatherEffect::Snow) ? 2 : 6;
+
+    for (int i = 0; i < weatherParticleCount; i++) {
+      lv_obj_set_hidden(weatherParticles[i], !active);
+      lv_obj_set_style_local_bg_color(weatherParticles[i], LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, color);
+      weatherParticleSpeed[i] = static_cast<lv_coord_t>(baseSpeed + (i % 3));
+    }
+  }
+
+  if (currentWeatherEffect == WeatherEffect::None) {
+    return;
+  }
+
+  for (int i = 0; i < weatherParticleCount; i++) {
+    weatherParticleY[i] = static_cast<lv_coord_t>(weatherParticleY[i] + weatherParticleSpeed[i]);
+    if (currentWeatherEffect == WeatherEffect::Snow) {
+      weatherParticleX[i] = static_cast<lv_coord_t>(weatherParticleX[i] + ((i % 2 == 0) ? 1 : -1));
+      if (weatherParticleX[i] < 0) {
+        weatherParticleX[i] = static_cast<lv_coord_t>(LV_HOR_RES - 1);
+      } else if (weatherParticleX[i] >= LV_HOR_RES) {
+        weatherParticleX[i] = 0;
+      }
+    }
+    if (weatherParticleY[i] > LV_VER_RES) {
+      weatherParticleY[i] = static_cast<lv_coord_t>(-10 - (i % 5) * 10);
+    }
+    lv_obj_set_pos(weatherParticles[i], weatherParticleX[i], weatherParticleY[i]);
+  }
 }

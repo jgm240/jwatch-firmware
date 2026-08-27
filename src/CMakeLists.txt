@@ -480,6 +480,7 @@ list(APPEND SOURCE_FILES
         displayapp/screens/WatchFaceModular.cpp
         displayapp/screens/WatchFaceSimple.cpp
         displayapp/screens/WatchFaceHandwriting.cpp
+        displayapp/screens/WatchFaceAstronomy.cpp
 
         ##
 

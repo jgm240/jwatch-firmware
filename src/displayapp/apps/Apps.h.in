@@ -88,6 +88,7 @@ namespace Pinetime {
       Modular,
       Simple,
       Handwriting,
+      Astronomy,
     };
 
     template <Apps>

@@ -18,6 +18,7 @@
 #include "displayapp/screens/WatchFaceModular.h"
 #include "displayapp/screens/WatchFaceSimple.h"
 #include "displayapp/screens/WatchFaceHandwriting.h"
+#include "displayapp/screens/WatchFaceAstronomy.h"
 
 namespace Pinetime {
   namespace Applications {

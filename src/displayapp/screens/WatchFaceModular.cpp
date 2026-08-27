@@ -9,8 +9,18 @@
 using namespace Pinetime::Applications::Screens;
 
 namespace {
-  constexpr std::array<lv_align_t, Pinetime::Controllers::Settings::modularWatchFaceSlots> slotAlign =
-    {LV_ALIGN_IN_TOP_LEFT, LV_ALIGN_IN_TOP_RIGHT, LV_ALIGN_IN_BOTTOM_LEFT, LV_ALIGN_IN_BOTTOM_RIGHT};
+  // 4 corners plus one slot flanking each side of the time (pushed inward from the screen
+  // edge via slotOffsetX so they sit next to the time label rather than jammed in the
+  // corner-adjacent middle of the edge).
+  constexpr std::array<lv_align_t, Pinetime::Controllers::Settings::modularWatchFaceSlots> slotAlign = {
+    LV_ALIGN_IN_TOP_LEFT,
+    LV_ALIGN_IN_TOP_RIGHT,
+    LV_ALIGN_IN_LEFT_MID,
+    LV_ALIGN_IN_RIGHT_MID,
+    LV_ALIGN_IN_BOTTOM_LEFT,
+    LV_ALIGN_IN_BOTTOM_RIGHT,
+  };
+  constexpr std::array<lv_coord_t, Pinetime::Controllers::Settings::modularWatchFaceSlots> slotOffsetX = {0, 0, 10, -10, 0, 0};
 
   // Cheap 2D parallax, not real 3D tilt - see WatchFaceDigital.cpp for the full rationale.
   constexpr int16_t tiltDivisor = 90;
@@ -50,7 +60,7 @@ WatchFaceModular::WatchFaceModular(Controllers::DateTime& dateTimeController, Co
     auto type = settingsController.GetModularSlot(i);
     complications[i] = Widgets::CreateComplication(type, controllers);
     if (complications[i] != nullptr) {
-      complications[i]->Create(lv_scr_act(), slotAlign[i], 0, 0);
+      complications[i]->Create(lv_scr_act(), slotAlign[i], slotOffsetX[i], 0);
     }
   }
 

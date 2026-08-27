@@ -62,12 +62,15 @@ namespace Pinetime {
         int colorIndex = 0;
       };
 
-      static constexpr size_t modularWatchFaceSlots = 4;
+      // 6 slots: 4 corners plus one flanking each side of the time.
+      static constexpr size_t modularWatchFaceSlots = 6;
 
       struct WatchFaceModular {
         std::array<Pinetime::Applications::Widgets::ComplicationType, modularWatchFaceSlots> slots = {
           Pinetime::Applications::Widgets::ComplicationType::Battery,
           Pinetime::Applications::Widgets::ComplicationType::Steps,
+          Pinetime::Applications::Widgets::ComplicationType::Weather,
+          Pinetime::Applications::Widgets::ComplicationType::Alarm,
           Pinetime::Applications::Widgets::ComplicationType::HeartRate,
           Pinetime::Applications::Widgets::ComplicationType::Date,
         };
@@ -586,6 +589,20 @@ namespace Pinetime {
         return settings.pausedDaysRemaining;
       };
 
+      // WatchFaceDigital-only weather particle accent (rain/snow drift based on the current
+      // condition) - opt-in since a constantly-animating effect costs more battery/CPU than
+      // a static face.
+      void SetWeatherEffectsEnabled(bool enabled) {
+        if (enabled != settings.weatherEffectsEnabled) {
+          settingsChanged = true;
+        }
+        settings.weatherEffectsEnabled = enabled;
+      };
+
+      bool GetWeatherEffectsEnabled() const {
+        return settings.weatherEffectsEnabled;
+      };
+
       static constexpr size_t activityHistoryDays = 6;
 
       struct DailyActivity {
@@ -754,7 +771,7 @@ namespace Pinetime {
     private:
       Pinetime::Controllers::FS& fs;
 
-      static constexpr uint32_t settingsVersion = 0x0015;
+      static constexpr uint32_t settingsVersion = 0x0017;
 
       struct SettingsData {
         uint32_t version = settingsVersion;
@@ -805,6 +822,7 @@ namespace Pinetime {
         uint32_t streakLastDayNumber = std::numeric_limits<uint32_t>::max();
         uint32_t pausedDaysRemaining = 0;
         std::array<DailyActivity, activityHistoryDays> activityHistory {};
+        bool weatherEffectsEnabled = false;
 
         Theme theme = Theme::Dark;
         Controllers::VibrationPattern selectedVibrationPattern = Controllers::VibrationPattern::Single;

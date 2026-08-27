@@ -26,7 +26,8 @@ namespace {
     {Pinetime::Applications::Widgets::ComplicationType::FitnessRings, "Fitness Rings"},
   }};
 
-  constexpr std::array<const char*, SettingModularWatchFace::nSlots> slotTitles = {"Slot 1", "Slot 2", "Slot 3", "Slot 4"};
+  constexpr std::array<const char*, SettingModularWatchFace::nSlots> slotTitles =
+    {"Top left", "Top right", "Left of time", "Right of time", "Bottom left", "Bottom right"};
 
   uint32_t IndexOf(Pinetime::Applications::Widgets::ComplicationType type) {
     for (size_t i = 0; i < options.size(); i++) {

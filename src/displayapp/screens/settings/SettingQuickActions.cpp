@@ -18,6 +18,7 @@ namespace {
     {Pinetime::Applications::Widgets::QuickAction::Flashlight, "Flashlight"},
     {Pinetime::Applications::Widgets::QuickAction::NotificationToggle, "Notifications"},
     {Pinetime::Applications::Widgets::QuickAction::OpenSettings, "Settings"},
+    {Pinetime::Applications::Widgets::QuickAction::Activity, "Activity"},
   }};
 
   constexpr std::array<const char*, SettingQuickActions::nSlots> slotTitles = {"Top left", "Top right", "Bottom left", "Bottom right"};
@@ -55,19 +56,27 @@ bool SettingQuickActions::OnTouchEvent(Pinetime::Applications::TouchEvents event
 }
 
 std::unique_ptr<Screen> SettingQuickActions::CreateScreen(unsigned int screenNum) const {
-  std::array<Screens::CheckboxList::Item, optionsCount> optionsOnThisScreen;
-  for (int i = 0; i < optionsCount; i++) {
-    optionsOnThisScreen[i] = Screens::CheckboxList::Item {options[i].name, true};
+  unsigned int slotIndex = screenNum / pagesPerSlot;
+  unsigned int pageInSlot = screenNum % pagesPerSlot;
+
+  std::array<Screens::CheckboxList::Item, optionsPerScreen> optionsOnThisScreen;
+  for (int i = 0; i < optionsPerScreen; i++) {
+    unsigned int optionIndex = i + (pageInSlot * optionsPerScreen);
+    if (optionIndex >= options.size()) {
+      optionsOnThisScreen[i] = {"", false};
+    } else {
+      optionsOnThisScreen[i] = Screens::CheckboxList::Item {options[optionIndex].name, true};
+    }
   }
 
   return std::make_unique<Screens::CheckboxList>(
-    0,
-    1,
-    slotTitles[screenNum],
+    pageInSlot,
+    pagesPerSlot,
+    slotTitles[slotIndex],
     Symbols::list,
-    IndexOf(settingsController.GetQuickAction(screenNum)),
-    [this, screenNum, &settings = settingsController](uint32_t index) {
-      settings.SetQuickAction(screenNum, options[index].action);
+    IndexOf(settingsController.GetQuickAction(slotIndex)),
+    [this, slotIndex, &settings = settingsController](uint32_t index) {
+      settings.SetQuickAction(slotIndex, options[index].action);
       settings.SaveSettings();
     },
     optionsOnThisScreen);

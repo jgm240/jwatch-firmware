@@ -27,7 +27,9 @@ namespace Pinetime {
 
         static constexpr int optionsPerScreen = 4;
         static constexpr int colorOptionsCount = 18;
-        static constexpr int nScreens = (colorOptionsCount - 1) / optionsPerScreen + 1;
+        // +1 for a trailing "Weather effects" toggle page - not part of the color picker's
+        // own pagination, just tacked on the end so it doesn't need its own grid entry.
+        static constexpr int nScreens = (colorOptionsCount - 1) / optionsPerScreen + 1 + 1;
 
       private:
         auto CreateScreenList() const;

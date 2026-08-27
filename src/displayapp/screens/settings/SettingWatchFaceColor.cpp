@@ -42,6 +42,37 @@ namespace {
     }
     return 0;
   }
+
+  struct ToggleOption {
+    bool enabled;
+    const char* name;
+  };
+
+  constexpr std::array<ToggleOption, 2> weatherEffectOptions = {{
+    {false, "Off"},
+    {true, "On"},
+  }};
+
+  std::array<CheckboxList::Item, CheckboxList::MaxItems> CreateWeatherEffectOptionArray() {
+    std::array<CheckboxList::Item, CheckboxList::MaxItems> optionArray;
+    for (size_t i = 0; i < CheckboxList::MaxItems; i++) {
+      if (i >= weatherEffectOptions.size()) {
+        optionArray[i] = {"", false};
+      } else {
+        optionArray[i] = {weatherEffectOptions[i].name, true};
+      }
+    }
+    return optionArray;
+  }
+
+  uint32_t IndexOfWeatherEffectOption(bool enabled) {
+    for (size_t i = 0; i < weatherEffectOptions.size(); i++) {
+      if (weatherEffectOptions[i].enabled == enabled) {
+        return i;
+      }
+    }
+    return 0;
+  }
 }
 
 auto SettingWatchFaceColor::CreateScreenList() const {
@@ -67,6 +98,23 @@ bool SettingWatchFaceColor::OnTouchEvent(Pinetime::Applications::TouchEvents eve
 }
 
 std::unique_ptr<Screen> SettingWatchFaceColor::CreateScreen(unsigned int screenNum) const {
+  if (screenNum == static_cast<unsigned int>(nScreens - 1)) {
+    // Standalone single-page 2-option toggle, not part of the color list's own pagination -
+    // screenID must be 0 here (see SettingButtonRadius.cpp's Glass UI fix earlier this
+    // project for why passing the outer page index instead corrupts CheckboxList's index math).
+    return std::make_unique<CheckboxList>(
+      0,
+      1,
+      "Weather effects",
+      Symbols::cloudSunRain,
+      IndexOfWeatherEffectOption(settingsController.GetWeatherEffectsEnabled()),
+      [&settings = settingsController](uint32_t index) {
+        settings.SetWeatherEffectsEnabled(weatherEffectOptions[index].enabled);
+        settings.SaveSettings();
+      },
+      CreateWeatherEffectOptionArray());
+  }
+
   std::array<Screens::CheckboxList::Item, optionsPerScreen> optionsOnThisScreen;
   for (int i = 0; i < optionsPerScreen; i++) {
     unsigned int optionIndex = i + (screenNum * optionsPerScreen);
