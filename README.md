@@ -27,3 +27,18 @@ etc.
 # Flashing
 
 Use Gadgetbridge on Android, InfiniTimeOrg/InfiniLink on iOS, Watchmate or Siglo on Linux for flashing
+
+# Licenses
+
+This project is released under the GNU General Public License version 3 or, at your option, any later version, same as [InfiniTime](https://github.com/InfiniTimeOrg/InfiniTime), the project it's forked from.
+
+It integrates the following projects:
+
+- RTOS: **[FreeRTOS](https://freertos.org)** under the MIT license
+- UI: **[LittleVGL/LVGL](https://lvgl.io/)** under the MIT license
+- BLE stack: **[NimBLE](https://github.com/apache/mynewt-nimble)** under the Apache 2.0 license
+- Font: **[Jetbrains Mono](https://www.jetbrains.com/fr-fr/lp/mono/)** under the Apache 2.0 license
+
+# Credits
+
+JWatch builds directly on the work of the [InfiniTime](https://github.com/InfiniTimeOrg/InfiniTime) project and its many contributors, and the broader #pinetime community.
