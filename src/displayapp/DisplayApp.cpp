@@ -29,7 +29,6 @@
 #include "displayapp/screens/Tile.h"
 #include "displayapp/screens/Twos.h"
 #include "displayapp/screens/Snake.h"
-#include "displayapp/screens/Physics.h"
 #include "displayapp/screens/FlashLight.h"
 #include "displayapp/screens/BatteryInfo.h"
 #include "displayapp/screens/Steps.h"

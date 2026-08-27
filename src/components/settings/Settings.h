@@ -708,26 +708,6 @@ namespace Pinetime {
         return settings.passcode;
       };
 
-      // Capped well under the object count that made the old free-pan Circle app menu crash
-      // (~42 live lv_obj_t) - unverified exactly where the real ceiling is on this hardware,
-      // so this stays conservative rather than pushing back up toward that number.
-      void SetPhysicsParticleCount(uint8_t count) {
-        if (count < 4) {
-          count = 4;
-        }
-        if (count > 28) {
-          count = 28;
-        }
-        if (count != settings.physicsParticleCount) {
-          settingsChanged = true;
-        }
-        settings.physicsParticleCount = count;
-      };
-
-      uint8_t GetPhysicsParticleCount() const {
-        return settings.physicsParticleCount;
-      };
-
       void SetTiltParallaxStrength(uint8_t strength) {
         if (strength > 140) {
           strength = 140;
@@ -760,7 +740,7 @@ namespace Pinetime {
     private:
       Pinetime::Controllers::FS& fs;
 
-      static constexpr uint32_t settingsVersion = 0x0018;
+      static constexpr uint32_t settingsVersion = 0x0019;
 
       struct SettingsData {
         uint32_t version = settingsVersion;
@@ -803,7 +783,6 @@ namespace Pinetime {
 
         bool passcodeEnabled = false;
         uint16_t passcode = 0;
-        uint8_t physicsParticleCount = 20;
 
         uint32_t caloriesGoal = 500;
         uint32_t currentStreak = 0;

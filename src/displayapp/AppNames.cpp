@@ -44,8 +44,6 @@ const char* Pinetime::Applications::AppNameFor(Apps app) {
       return "Activity";
     case Apps::SleepTracking:
       return "Sleep";
-    case Apps::Physics:
-      return "Physics";
     default:
       return "App";
   }

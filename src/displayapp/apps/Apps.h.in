@@ -70,7 +70,6 @@ namespace Pinetime {
       SettingTiltParallax,
       PasscodeLock,
       SettingPasscode,
-      Physics,
       ActivityHistory,
       SettingPauseRings,
       SettingSpiNor,
