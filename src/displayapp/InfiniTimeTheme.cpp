@@ -51,12 +51,12 @@ static void style_init_reset(lv_style_t* style) {
   }
 }
 
-static void basic_init(bool isLight) {
-  lv_color_t bgMain = isLight ? Colors::Light::background : LV_COLOR_BLACK;
-  lv_color_t textMain = isLight ? Colors::Light::text : LV_COLOR_WHITE;
-  lv_color_t btnBg = isLight ? Colors::Light::button : Colors::bg;
-  lv_color_t btnBgDisabled = isLight ? Colors::Light::buttonDisabled : Colors::bgDark;
-  lv_color_t iconColor = isLight ? Colors::Light::icon : LV_COLOR_WHITE;
+static void basic_init() {
+  lv_color_t bgMain = LV_COLOR_BLACK;
+  lv_color_t textMain = LV_COLOR_WHITE;
+  lv_color_t btnBg = Colors::bg;
+  lv_color_t btnBgDisabled = Colors::bgDark;
+  lv_color_t iconColor = LV_COLOR_WHITE;
 
   style_init_reset(&style_bg);
   lv_style_set_bg_opa(&style_bg, LV_STATE_DEFAULT, LV_OPA_COVER);
@@ -101,9 +101,7 @@ static void basic_init(bool isLight) {
 
   style_init_reset(&style_list_btn);
   lv_style_set_bg_opa(&style_list_btn, LV_STATE_DEFAULT, LV_OPA_COVER);
-  // In light mode the screen background is already near-white, so give list rows a
-  // slightly darker shade than style_bg to stay visually distinct from it.
-  lv_style_set_bg_color(&style_list_btn, LV_STATE_DEFAULT, isLight ? Colors::Light::button : LV_COLOR_WHITE);
+  lv_style_set_bg_color(&style_list_btn, LV_STATE_DEFAULT, LV_COLOR_WHITE);
   lv_style_set_text_color(&style_list_btn, LV_STATE_DEFAULT, Colors::bg);
   lv_style_set_text_color(&style_list_btn, LV_STATE_CHECKED, LV_COLOR_WHITE);
   lv_style_set_image_recolor(&style_list_btn, LV_STATE_DEFAULT, Colors::bg);
@@ -223,7 +221,7 @@ static void basic_init(bool isLight) {
  * @param font_title pointer to a extra large font
  * @return a pointer to reference this theme later
  */
-lv_theme_t* lv_pinetime_theme_init(bool isLight) {
+lv_theme_t* lv_pinetime_theme_init() {
   theme.color_primary = LV_COLOR_WHITE;
   theme.color_secondary = LV_COLOR_GRAY;
   theme.font_small = &jetbrains_mono_bold_20;
@@ -232,7 +230,7 @@ lv_theme_t* lv_pinetime_theme_init(bool isLight) {
   theme.font_title = &jetbrains_mono_bold_20;
   theme.flags = 0;
 
-  basic_init(isLight);
+  basic_init();
 
   theme.apply_xcb = theme_apply;
 

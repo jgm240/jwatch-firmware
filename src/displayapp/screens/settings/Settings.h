@@ -52,7 +52,7 @@ namespace Pinetime {
           {Symbols::list, "About", Apps::SysInfo},
           {Symbols::bell, "Vibration", Apps::SettingVibration},
 
-          {Symbols::moon, "Theme", Apps::SettingTheme},
+          {Symbols::none, "", Apps::None},
           {Symbols::paintbrush, "Modular face", Apps::SettingModularWatchFace},
           {Symbols::list, "Quick Actions", Apps::SettingQuickActions},
           {Symbols::paintbrushLg, "Handwriting", Apps::SettingHandwriting},

@@ -10,8 +10,8 @@
 using namespace Pinetime::Components;
 
 namespace {
-  void InitTheme(bool isLight) {
-    lv_theme_t* theme = lv_pinetime_theme_init(isLight);
+  void InitTheme() {
+    lv_theme_t* theme = lv_pinetime_theme_init();
     lv_theme_set_act(theme);
   }
 
@@ -76,20 +76,12 @@ bool touchpad_read(lv_indev_drv_t* indev_drv, lv_indev_data_t* data) {
 LittleVgl::LittleVgl(Pinetime::Drivers::St7789& lcd, Pinetime::Controllers::FS& filesystem) : lcd {lcd}, filesystem {filesystem} {
 }
 
-void LittleVgl::Init(bool isLight) {
+void LittleVgl::Init() {
   lv_init();
-  InitTheme(isLight);
+  InitTheme();
   InitDisplay();
   InitTouchpad();
   InitFileSystem();
-}
-
-void LittleVgl::SetTheme(bool isLight) {
-  InitTheme(isLight);
-  // Re-initializing the theme only changes the contents of the shared, static
-  // lv_style_t objects; existing objects already holding pointers to them need
-  // an explicit nudge to redraw with the new colors.
-  lv_obj_report_style_mod(nullptr);
 }
 
 void LittleVgl::InitDisplay() {

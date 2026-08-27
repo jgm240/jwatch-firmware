@@ -453,7 +453,6 @@ list(APPEND SOURCE_FILES
         displayapp/screens/settings/SettingOTA.cpp
         displayapp/screens/settings/SettingVibration.cpp
         displayapp/screens/settings/SettingVibrationRecord.cpp
-        displayapp/screens/settings/SettingTheme.cpp
         displayapp/screens/settings/SettingModularWatchFace.cpp
         displayapp/screens/settings/SettingQuickActions.cpp
         displayapp/screens/settings/SettingHandwriting.cpp

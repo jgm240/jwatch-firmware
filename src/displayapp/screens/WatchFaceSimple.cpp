@@ -56,8 +56,7 @@ WatchFaceSimple::WatchFaceSimple(Controllers::DateTime& dateTimeController,
 
   statusIcons.Create();
 
-  bool isLight = settingsController.GetTheme() == Controllers::Settings::Theme::Light;
-  lv_color_t secondaryTextColor = isLight ? Colors::Light::text : Colors::lightGray;
+  lv_color_t secondaryTextColor = Colors::lightGray;
 
   label_time = lv_label_create(lv_scr_act(), nullptr);
   lv_obj_set_style_local_text_font(label_time, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, ConvertFont(settingsController.GetWatchFaceSimpleFont()));

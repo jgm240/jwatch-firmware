@@ -47,7 +47,6 @@ namespace Pinetime {
       SettingOTA,
       SettingVibration,
       SettingVibrationRecord,
-      SettingTheme,
       SettingModularWatchFace,
       SettingQuickActions,
       SettingHandwriting,

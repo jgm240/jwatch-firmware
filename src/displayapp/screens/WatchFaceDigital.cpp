@@ -70,8 +70,7 @@ WatchFaceDigital::WatchFaceDigital(Controllers::DateTime& dateTimeController,
   notificationComplication.Create(lv_scr_act(), LV_ALIGN_IN_TOP_LEFT, 0, 0);
   weatherComplication.Create(lv_scr_act(), LV_ALIGN_IN_TOP_MID, 0, 50);
 
-  bool isLight = settingsController.GetTheme() == Controllers::Settings::Theme::Light;
-  lv_color_t secondaryTextColor = isLight ? Colors::Light::text : lv_color_hex(0x999999);
+  lv_color_t secondaryTextColor = lv_color_hex(0x999999);
 
   label_date = lv_label_create(lv_scr_act(), nullptr);
   lv_obj_align(label_date, lv_scr_act(), LV_ALIGN_CENTER, 0, 60);

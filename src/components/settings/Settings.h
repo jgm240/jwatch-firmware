@@ -46,7 +46,6 @@ namespace Pinetime {
       enum class PTSWeather : uint8_t { On, Off };
       enum class PrideFlag : uint8_t { Gay, Trans, Bi, Lesbian };
       enum class DfuAndFsMode : uint8_t { Disabled, Enabled, EnabledTillReboot };
-      enum class Theme : uint8_t { Dark, Light };
       enum class WatchFaceSimpleFont : uint8_t { ExtraBoldCompressed, Light, Mono76 };
 
       struct PineTimeStyle {
@@ -368,16 +367,6 @@ namespace Pinetime {
         return (settings.dfuAndFsEnabledOnBoot ? DfuAndFsMode::Enabled : DfuAndFsMode::Disabled);
       };
 
-      void SetTheme(Theme newTheme) {
-        if (newTheme != settings.theme) {
-          settingsChanged = true;
-        }
-        settings.theme = newTheme;
-      };
-
-      Theme GetTheme() const {
-        return settings.theme;
-      };
 
       void SetVibrationPattern(Controllers::VibrationPattern pattern) {
         if (pattern != settings.selectedVibrationPattern) {
@@ -771,7 +760,7 @@ namespace Pinetime {
     private:
       Pinetime::Controllers::FS& fs;
 
-      static constexpr uint32_t settingsVersion = 0x0017;
+      static constexpr uint32_t settingsVersion = 0x0018;
 
       struct SettingsData {
         uint32_t version = settingsVersion;
@@ -824,7 +813,6 @@ namespace Pinetime {
         std::array<DailyActivity, activityHistoryDays> activityHistory {};
         bool weatherEffectsEnabled = false;
 
-        Theme theme = Theme::Dark;
         Controllers::VibrationPattern selectedVibrationPattern = Controllers::VibrationPattern::Single;
         Controllers::PatternData customVibrationPattern;
 

@@ -14,18 +14,6 @@ namespace Colors {
   static constexpr lv_color_t bgAlt = LV_COLOR_MAKE(0x38, 0x38, 0x38);
   static constexpr lv_color_t bgDark = LV_COLOR_MAKE(0x18, 0x18, 0x18);
   static constexpr lv_color_t highlight = green;
-
-  // Light theme palette. Only used by InfiniTimeTheme.cpp (and any watchface that
-  // explicitly opts in, e.g. the retrofitted WatchFaceDigital) -- the constants
-  // above keep meaning "dark" so every screen that already references them
-  // directly is unaffected by light mode.
-  namespace Light {
-    static constexpr lv_color_t background = LV_COLOR_MAKE(0xf2, 0xf2, 0xf2);
-    static constexpr lv_color_t text = LV_COLOR_MAKE(0x10, 0x10, 0x10);
-    static constexpr lv_color_t button = LV_COLOR_MAKE(0xcf, 0xd4, 0xdc);
-    static constexpr lv_color_t buttonDisabled = LV_COLOR_MAKE(0xb8, 0xb8, 0xb8);
-    static constexpr lv_color_t icon = LV_COLOR_MAKE(0x20, 0x20, 0x20);
-  };
 };
 
 /**
@@ -39,4 +27,4 @@ namespace Colors {
  * @param font_title pointer to a extra large font
  * @return a pointer to reference this theme later
  */
-lv_theme_t* lv_pinetime_theme_init(bool isLight);
+lv_theme_t* lv_pinetime_theme_init();

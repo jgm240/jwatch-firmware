@@ -19,8 +19,7 @@ namespace Pinetime {
       LittleVgl(LittleVgl&&) = delete;
       LittleVgl& operator=(LittleVgl&&) = delete;
 
-      void Init(bool isLight);
-      void SetTheme(bool isLight);
+      void Init();
 
       void FlushDisplay(const lv_area_t* area, lv_color_t* color_p);
       bool GetTouchPadInfo(lv_indev_data_t* ptr);

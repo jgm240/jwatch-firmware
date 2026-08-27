@@ -66,7 +66,6 @@
 #include "displayapp/screens/settings/SettingOTA.h"
 #include "displayapp/screens/settings/SettingVibration.h"
 #include "displayapp/screens/settings/SettingVibrationRecord.h"
-#include "displayapp/screens/settings/SettingTheme.h"
 #include "displayapp/screens/settings/SettingModularWatchFace.h"
 #include "displayapp/screens/settings/SettingQuickActions.h"
 #include "displayapp/screens/settings/SettingHandwriting.h"
@@ -203,7 +202,7 @@ void DisplayApp::Init() {
   motorController.Init();
   brightnessController.Init();
   ApplyBrightness();
-  lvgl.Init(settingsController.GetTheme() == Controllers::Settings::Theme::Light);
+  lvgl.Init();
   Screens::Styles::SetButtonRadius(settingsController.GetButtonCornerRadius());
   Screens::Styles::SetGlassEnabled(settingsController.GetGlassUIEnabled());
 
@@ -787,9 +786,6 @@ void DisplayApp::LoadScreen(Apps app, DisplayApp::FullRefreshDirections directio
       break;
     case Apps::SettingVibrationRecord:
       currentScreen = std::make_unique<Screens::SettingVibrationRecord>(settingsController, motorController);
-      break;
-    case Apps::SettingTheme:
-      currentScreen = std::make_unique<Screens::SettingTheme>(this, settingsController, lvgl);
       break;
     case Apps::SettingModularWatchFace:
       currentScreen = std::make_unique<Screens::SettingModularWatchFace>(this, settingsController);
