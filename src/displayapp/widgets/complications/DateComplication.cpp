@@ -1,0 +1,20 @@
+#include "displayapp/widgets/complications/DateComplication.h"
+
+using namespace Pinetime::Applications::Widgets;
+
+DateComplication::DateComplication(Controllers::DateTime& dateTimeController) : dateTimeController {dateTimeController} {
+}
+
+void DateComplication::Create(lv_obj_t* parent, lv_align_t align, lv_coord_t xOfs, lv_coord_t yOfs) {
+  label = lv_label_create(parent, nullptr);
+  lv_label_set_text_static(label, "");
+  lv_obj_align(label, parent, align, xOfs, yOfs);
+}
+
+void DateComplication::Update() {
+  currentDate = std::chrono::time_point_cast<std::chrono::days>(dateTimeController.CurrentDateTime());
+  if (currentDate.IsUpdated()) {
+    lv_label_set_text_fmt(label, "%s %d %s", dateTimeController.DayOfWeekShortToString(), dateTimeController.Day(), dateTimeController.MonthShortToString());
+    lv_obj_realign(label);
+  }
+}

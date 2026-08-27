@@ -1,0 +1,111 @@
+#!/bin/bash
+(return 0 2>/dev/null) && SOURCED="true" || SOURCED="false"
+export LC_ALL=C.UTF-8
+export LANG=C.UTF-8
+set -x
+set -e
+
+# Default locations if the var isn't already set
+export TOOLS_DIR="${TOOLS_DIR:=/opt}"
+export SOURCES_DIR="${SOURCES_DIR:=/sources}"
+export BUILD_DIR="${BUILD_DIR:=$SOURCES_DIR/build}"
+export OUTPUT_DIR="${OUTPUT_DIR:=$SOURCES_DIR/build/output}"
+
+# Specify a folder with read/write access to NPM
+export NPM_DIR="$BUILD_DIR/npm"
+export npm_config_cache="${NPM_DIR}"
+
+export BUILD_TYPE=${BUILD_TYPE:=Release}
+export GCC_ARM_VER=${GCC_ARM_VER:="15.3.rel1"}
+export NRF_SDK_VER=${NRF_SDK_VER:="nRF5_SDK_15.3.0_59ac345"}
+# convert to lower case and remove _ and . character
+# the download URL uses the SLUG, but the extracted folder is named like the original value
+NRF_SDK_VER_SLUG=${NRF_SDK_VER,,}
+export NRF_SDK_VER_SLUG=${NRF_SDK_VER_SLUG//[_.]/}
+
+MACHINE="$(uname -m)"
+[ "$MACHINE" = "arm64" ] && MACHINE="aarch64"
+
+export GCC_ARM_PATH="arm-gnu-toolchain-$GCC_ARM_VER-$MACHINE-arm-none-eabi"
+
+main() {
+  local target="$1"
+
+  mkdir -p "$TOOLS_DIR"
+
+  [ ! -d "$TOOLS_DIR/$GCC_ARM_PATH" ] && GetGcc
+  [ ! -d "$TOOLS_DIR/$NRF_SDK_VER" ] && GetNrfSdk
+  [ ! -d "$TOOLS_DIR/mcuboot" ] && GetMcuBoot
+
+  mkdir -p "$BUILD_DIR"
+
+  CmakeGenerate
+  CmakeBuild $target
+  BUILD_RESULT=$?
+  if [ "$DISABLE_POSTBUILD" != "true" -a "$BUILD_RESULT" == 0 ]; then
+    source "$BUILD_DIR/post_build.sh"
+  fi
+  # assuming post_build.sh will never fail on a successful build
+  return $BUILD_RESULT
+}
+
+GetGcc() {
+  wget -q https://gitlab.arm.com/api/v4/projects/tooling%2Fgnu-toolchains-for-arm/packages/generic/gnu-toolchain/$GCC_ARM_VER/$GCC_ARM_PATH.tar.xz -O - | tar -xJ -C $TOOLS_DIR/
+  if [ ! -d "$TOOLS_DIR/$GCC_ARM_PATH" ]; then
+    echo "missing GCC path: $TOOLS_DIR/$GCC_ARM_PATH"
+    return 1
+  fi
+}
+
+GetMcuBoot() {
+  git clone https://github.com/mcu-tools/mcuboot.git "$TOOLS_DIR/mcuboot"
+  pip3 install -r "$TOOLS_DIR/mcuboot/scripts/requirements.txt"
+  if [ ! -d "$TOOLS_DIR/mcuboot" ]; then
+    echo "missing mcuboot path: $TOOLS_DIR/mcuboot"
+    return 1
+  fi
+}
+
+GetNrfSdk() {
+  wget -q "https://nsscprodmedia.blob.core.windows.net/prod/software-and-other-downloads/sdks/nrf5/binaries/$NRF_SDK_VER_SLUG.zip" -O /tmp/$NRF_SDK_VER
+  unzip -q /tmp/$NRF_SDK_VER -d "$TOOLS_DIR/"
+  rm /tmp/$NRF_SDK_VER
+  if [ ! -d "$TOOLS_DIR/$NRF_SDK_VER" ]; then
+    echo "missing NRF_SDK path: $TOOLS_DIR/$NRF_SDK_VER"
+    return 1
+  fi
+}
+
+CmakeGenerate() {
+  CMAKE_ARGS=()
+  [ -n "$ENABLE_USERAPPS" ]  && CMAKE_ARGS+=("-DENABLE_USERAPPS=$ENABLE_USERAPPS")
+  [ -n "$ENABLE_WATCHFACES" ] && CMAKE_ARGS+=("-DENABLE_WATCHFACES=$ENABLE_WATCHFACES")
+
+  cmake -G "Unix Makefiles" \
+    -S "$SOURCES_DIR" \
+    -B "$BUILD_DIR" \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DARM_NONE_EABI_TOOLCHAIN_PATH="$TOOLS_DIR/$GCC_ARM_PATH" \
+    -DNRF5_SDK_PATH="$TOOLS_DIR/$NRF_SDK_VER" \
+    -DBUILD_DFU=1 \
+    -DBUILD_RESOURCES=1 \
+    ${CMAKE_ARGS[@]}
+}
+
+CmakeBuild() {
+  local target="$1"
+  [ -n "$target" ] && target="--target $target"
+  cmake --build "$BUILD_DIR" --config $BUILD_TYPE $target -- -j$(nproc)
+  BUILD_RESULT=$?
+  return $BUILD_RESULT
+}
+
+if [ $SOURCED = "false" ]; then
+  # It is important to return exit code of main
+  # To be future-proof, this is handled explicitely
+  main "$@"
+  BUILD_RESULT=$?
+  exit $BUILD_RESULT
+else
+  echo "Sourced!"
+fi

@@ -1,0 +1,19 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+# Prevent build errors on non lf systems (like Windows), we need files with lf as newlines.
+* text=auto eol=lf
+
+# Explicitly declare text files you want to always be normalized and converted
+# to lf line endings on checkout.
+*.c text
+*.cpp text
+*.h text
+*.hpp text
+
+# Denote all files that are truly binary and should not be modified.
+*.png binary
+*.bin binary
+*.jpg binary
+*.jpeg binary
+
+# Declare (Unix-style) files that will always have LF line endings on checkout.
+*.sh text eol=lf
