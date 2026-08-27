@@ -67,14 +67,12 @@
 #include "displayapp/screens/settings/SettingVibrationRecord.h"
 #include "displayapp/screens/settings/SettingModularWatchFace.h"
 #include "displayapp/screens/settings/SettingQuickActions.h"
-#include "displayapp/screens/settings/SettingHandwriting.h"
 #include "displayapp/screens/settings/SettingWatchFaceSimpleStyle.h"
 #include "displayapp/screens/settings/SettingAppMenuStyle.h"
 #include "displayapp/screens/settings/SettingNightstand.h"
 #include "displayapp/screens/settings/SettingActivityGoals.h"
 #include "displayapp/screens/settings/SettingWatchFaceColor.h"
 #include "displayapp/screens/settings/SettingButtonRadius.h"
-#include "displayapp/screens/settings/SettingOpenHaystack.h"
 #include "displayapp/screens/settings/SettingBedtime.h"
 #include "displayapp/screens/settings/SettingTiltParallax.h"
 #include "displayapp/screens/settings/SettingPauseRings.h"
@@ -792,9 +790,6 @@ void DisplayApp::LoadScreen(Apps app, DisplayApp::FullRefreshDirections directio
     case Apps::SettingQuickActions:
       currentScreen = std::make_unique<Screens::SettingQuickActions>(this, settingsController);
       break;
-    case Apps::SettingHandwriting:
-      currentScreen = std::make_unique<Screens::SettingHandwriting>(filesystem);
-      break;
     case Apps::SettingWatchFaceSimpleStyle:
       currentScreen = std::make_unique<Screens::SettingWatchFaceSimpleStyle>(this, settingsController);
       break;
@@ -812,9 +807,6 @@ void DisplayApp::LoadScreen(Apps app, DisplayApp::FullRefreshDirections directio
       break;
     case Apps::SettingButtonRadius:
       currentScreen = std::make_unique<Screens::SettingButtonRadius>(this, settingsController);
-      break;
-    case Apps::SettingOpenHaystack:
-      currentScreen = std::make_unique<Screens::SettingOpenHaystack>(this, settingsController);
       break;
     case Apps::SettingBedtime:
       currentScreen = std::make_unique<Screens::SettingBedtime>(this, settingsController);

@@ -431,7 +431,6 @@ list(APPEND SOURCE_FILES
         displayapp/widgets/complications/CubeComplication.cpp
         displayapp/widgets/complications/FitnessRingsComplication.cpp
         displayapp/widgets/complications/ComplicationFactory.cpp
-        displayapp/widgets/HandwritingGlyphs.cpp
 
         ## Settings
         displayapp/screens/settings/QuickSettings.cpp
@@ -454,14 +453,12 @@ list(APPEND SOURCE_FILES
         displayapp/screens/settings/SettingVibrationRecord.cpp
         displayapp/screens/settings/SettingModularWatchFace.cpp
         displayapp/screens/settings/SettingQuickActions.cpp
-        displayapp/screens/settings/SettingHandwriting.cpp
         displayapp/screens/settings/SettingWatchFaceSimpleStyle.cpp
         displayapp/screens/settings/SettingAppMenuStyle.cpp
         displayapp/screens/settings/SettingNightstand.cpp
         displayapp/screens/settings/SettingActivityGoals.cpp
         displayapp/screens/settings/SettingWatchFaceColor.cpp
         displayapp/screens/settings/SettingButtonRadius.cpp
-        displayapp/screens/settings/SettingOpenHaystack.cpp
         displayapp/screens/settings/SettingBedtime.cpp
         displayapp/screens/settings/SettingTiltParallax.cpp
         displayapp/screens/settings/SettingPauseRings.cpp
@@ -478,7 +475,6 @@ list(APPEND SOURCE_FILES
         displayapp/screens/WatchFacePrideFlag.cpp
         displayapp/screens/WatchFaceModular.cpp
         displayapp/screens/WatchFaceSimple.cpp
-        displayapp/screens/WatchFaceHandwriting.cpp
         displayapp/screens/WatchFaceAstronomy.cpp
 
         ##
@@ -517,7 +513,6 @@ list(APPEND SOURCE_FILES
         components/ble/ServiceDiscovery.cpp
         components/ble/HeartRateService.cpp
         components/ble/HidService.cpp
-        components/ble/OpenHaystack.cpp
         components/ble/MotionService.cpp
         components/firmwarevalidator/FirmwareValidator.cpp
         components/motor/MotorController.cpp
@@ -592,7 +587,6 @@ list(APPEND RECOVERY_SOURCE_FILES
         components/ble/NavigationService.cpp
         components/ble/HeartRateService.cpp
         components/ble/HidService.cpp
-        components/ble/OpenHaystack.cpp
         components/ble/MotionService.cpp
         components/firmwarevalidator/FirmwareValidator.cpp
         components/settings/Settings.cpp

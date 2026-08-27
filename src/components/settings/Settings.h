@@ -619,17 +619,6 @@ namespace Pinetime {
         settingsChanged = true;
       };
 
-      void SetOpenHaystackEnabled(bool enabled) {
-        if (enabled != settings.openHaystackEnabled) {
-          settingsChanged = true;
-        }
-        settings.openHaystackEnabled = enabled;
-      };
-
-      bool GetOpenHaystackEnabled() const {
-        return settings.openHaystackEnabled;
-      };
-
       void SetBedtimeStartHour(uint8_t hour) {
         if (hour > 23) {
           hour = 23;
@@ -680,9 +669,9 @@ namespace Pinetime {
         return settings.glassUIEnabled;
       };
 
-      // Casual screen-lock deterrence only, same posture as the OpenHaystack private key
-      // and custom vibration pattern already stored in plaintext elsewhere in this struct -
-      // not a defense against someone pulling the external flash chip and reading it directly.
+      // Casual screen-lock deterrence only, same posture as the custom vibration pattern
+      // already stored in plaintext elsewhere in this struct - not a defense against someone
+      // pulling the external flash chip and reading it directly.
       void SetPasscodeEnabled(bool enabled) {
         if (enabled != settings.passcodeEnabled) {
           settingsChanged = true;
@@ -740,7 +729,7 @@ namespace Pinetime {
     private:
       Pinetime::Controllers::FS& fs;
 
-      static constexpr uint32_t settingsVersion = 0x0019;
+      static constexpr uint32_t settingsVersion = 0x001A;
 
       struct SettingsData {
         uint32_t version = settingsVersion;
@@ -773,7 +762,6 @@ namespace Pinetime {
         uint8_t buttonCornerRadius = 20;
         uint32_t exerciseGoalMinutes = 30;
         uint32_t standGoalHours = 12;
-        bool openHaystackEnabled = false;
 
         uint8_t bedtimeStartHour = 22;
         uint8_t bedtimeEndHour = 8;

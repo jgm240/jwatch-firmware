@@ -139,17 +139,6 @@ namespace Pinetime {
       uint8_t wakeLocksHeld = 0;
       SystemTaskState state = SystemTaskState::Running;
 
-      // OpenHaystack auto-fallback: once disconnected for openHaystackFallbackTicks, alternate
-      // between broadcasting the Find My beacon and briefly resuming normal connectable
-      // advertising, so a companion phone coming back in range can still reconnect.
-      uint32_t disconnectedTicks = 0;
-      uint32_t openHaystackCycleTicks = 0;
-      bool openHaystackCyclingToNormal = false;
-      static constexpr uint32_t openHaystackFallbackTicks = 5 * 60 * 10;  // 5 min at the 100ms stateUpdatePeriod tick
-      static constexpr uint32_t openHaystackBeaconPhaseTicks = 25 * 10;  // 25s broadcasting
-      static constexpr uint32_t openHaystackListenPhaseTicks = 5 * 10;   // 5s normal advertising
-      void UpdateOpenHaystack();
-
       void HandleButtonAction(Controllers::ButtonActions action);
       bool fastWakeUpDone = false;
 

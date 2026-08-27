@@ -15,9 +15,9 @@ namespace Pinetime {
 
     namespace Screens {
 
-      // Accent-color picker shared by WatchFaceDigital, WatchFaceAnalog, WatchFaceModular,
-      // and WatchFaceHandwriting. Separate from watchFaceSimpleColor, which stays scoped to
-      // WatchFaceSimple's own already-shipped settings screen.
+      // Accent-color picker shared by WatchFaceDigital, WatchFaceAnalog, and WatchFaceModular.
+      // Separate from watchFaceSimpleColor, which stays scoped to WatchFaceSimple's own
+      // already-shipped settings screen.
       class SettingWatchFaceColor : public Screen {
       public:
         SettingWatchFaceColor(DisplayApp* app, Pinetime::Controllers::Settings& settingsController);

@@ -187,51 +187,12 @@ void NimbleController::StartAdvertising() {
   ASSERT(rc == 0);
 }
 
-void NimbleController::StartOpenHaystackAdvertising() {
-  if (ble_gap_adv_active()) {
-    ble_gap_adv_stop();
-  }
-
-  std::array<uint8_t, 6> addr;
-  OpenHaystack::BuildAdvertisingAddress(addr);
-  int rc = ble_hs_id_set_rnd(addr.data());
-  ASSERT(rc == 0);
-
-  std::array<uint8_t, OpenHaystack::advDataSize> payload;
-  OpenHaystack::BuildAdvertisingPayload(payload);
-  rc = ble_gap_adv_set_data(payload.data(), static_cast<int>(payload.size()));
-  ASSERT(rc == 0);
-
-  struct ble_gap_adv_params adv_params;
-  memset(&adv_params, 0, sizeof(adv_params));
-  adv_params.conn_mode = BLE_GAP_CONN_MODE_NON;
-  adv_params.disc_mode = BLE_GAP_DISC_MODE_NON;
-  adv_params.itvl_min = 1636;
-  adv_params.itvl_max = 1651;
-
-  rc = ble_gap_adv_start(BLE_OWN_ADDR_RANDOM, NULL, BLE_HS_FOREVER, &adv_params, GAPEventCallback, this);
-  ASSERT(rc == 0);
-
-  openHaystackActive = true;
-}
-
-void NimbleController::StopOpenHaystackAdvertising() {
-  if (!openHaystackActive) {
-    return;
-  }
-  openHaystackActive = false;
-  if (ble_gap_adv_active()) {
-    ble_gap_adv_stop();
-  }
-  StartAdvertising();
-}
-
 int NimbleController::OnGAPEvent(ble_gap_event* event) {
   switch (event->type) {
     case BLE_GAP_EVENT_ADV_COMPLETE:
       NRF_LOG_INFO("Advertising event : BLE_GAP_EVENT_ADV_COMPLETE");
       NRF_LOG_INFO("reason=%d; status=%0X", event->adv_complete.reason, event->connect.status);
-      if (!openHaystackActive && bleController.IsRadioEnabled() && !bleController.IsConnected()) {
+      if (bleController.IsRadioEnabled() && !bleController.IsConnected()) {
         StartAdvertising();
       }
       break;

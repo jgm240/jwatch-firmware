@@ -242,9 +242,6 @@ void SystemTask::Work() {
           displayApp.PushMessage(Pinetime::Applications::Display::Messages::NotifyDeviceActivity);
           isBleDiscoveryTimerRunning = true;
           bleDiscoveryTimer = 5;
-          disconnectedTicks = 0;
-          openHaystackCycleTicks = 0;
-          openHaystackCyclingToNormal = false;
           break;
         case Messages::BleFirmwareUpdateStarted:
           GoToRunning();
@@ -419,7 +416,6 @@ void SystemTask::Work() {
       if (nrf_gpio_pin_read(PinMap::Button) == 0) {
         watchdog.Reload();
       }
-      UpdateOpenHaystack();
       lastStateUpdate = xTaskGetTickCount();
     }
   }
@@ -492,44 +488,6 @@ void SystemTask::UpdateMotion() {
   }
 }
 
-void SystemTask::UpdateOpenHaystack() {
-  if (!settingsController.GetOpenHaystackEnabled()) {
-    if (nimbleController.IsOpenHaystackActive()) {
-      nimbleController.StopOpenHaystackAdvertising();
-    }
-    disconnectedTicks = 0;
-    openHaystackCycleTicks = 0;
-    openHaystackCyclingToNormal = false;
-    return;
-  }
-
-  if (bleController.IsConnected()) {
-    // Handled by Messages::BleConnected resetting the counters; nothing to do here.
-    return;
-  }
-
-  if (disconnectedTicks < openHaystackFallbackTicks) {
-    disconnectedTicks++;
-    return;
-  }
-
-  // Past the fallback threshold: alternate between broadcasting and briefly listening for a
-  // companion phone to reconnect, since OpenHaystack's non-connectable advertisement can't
-  // accept a connection while it's active.
-  if (!nimbleController.IsOpenHaystackActive() && !openHaystackCyclingToNormal) {
-    nimbleController.StartOpenHaystackAdvertising();
-  }
-
-  openHaystackCycleTicks++;
-  if (openHaystackCyclingToNormal && openHaystackCycleTicks >= openHaystackListenPhaseTicks) {
-    openHaystackCycleTicks = 0;
-    openHaystackCyclingToNormal = false;
-  } else if (!openHaystackCyclingToNormal && openHaystackCycleTicks >= openHaystackBeaconPhaseTicks) {
-    openHaystackCycleTicks = 0;
-    openHaystackCyclingToNormal = true;
-    nimbleController.StopOpenHaystackAdvertising();
-  }
-}
 
 void SystemTask::HandleButtonAction(Controllers::ButtonActions action) {
   if (IsSleeping()) {

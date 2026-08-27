@@ -55,7 +55,7 @@ namespace Pinetime {
           {Symbols::none, "", Apps::None},
           {Symbols::paintbrush, "Modular face", Apps::SettingModularWatchFace},
           {Symbols::list, "Quick Actions", Apps::SettingQuickActions},
-          {Symbols::paintbrushLg, "Handwriting", Apps::SettingHandwriting},
+          {Symbols::none, "", Apps::None},
 
           {Symbols::paintbrush, "Watchface style", Apps::SettingWatchFaceSimpleStyle},
           {Symbols::list, "App menu", Apps::SettingAppMenuStyle},
@@ -64,7 +64,7 @@ namespace Pinetime {
 
           {Symbols::list, "Button radius", Apps::SettingButtonRadius},
           {Symbols::tachometer, "Activity goals", Apps::SettingActivityGoals},
-          {Symbols::bluetooth, "Find My", Apps::SettingOpenHaystack},
+          {Symbols::none, "", Apps::None},
           {Symbols::moon, "Bedtime", Apps::SettingBedtime},
 
           {Symbols::tachometer, "Tilt parallax", Apps::SettingTiltParallax},

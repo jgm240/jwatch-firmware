@@ -49,7 +49,6 @@ namespace Pinetime {
       SettingVibrationRecord,
       SettingModularWatchFace,
       SettingQuickActions,
-      SettingHandwriting,
       SettingWatchFaceSimpleStyle,
       SettingAppMenuStyle,
       SettingNightstand,
@@ -65,7 +64,6 @@ namespace Pinetime {
       SettingActivityGoals,
       SettingWatchFaceColor,
       SettingButtonRadius,
-      SettingOpenHaystack,
       SettingBedtime,
       SettingTiltParallax,
       PasscodeLock,
@@ -86,7 +84,6 @@ namespace Pinetime {
       PrideFlag,
       Modular,
       Simple,
-      Handwriting,
       Astronomy,
     };
 

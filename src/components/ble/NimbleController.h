@@ -23,7 +23,6 @@
 #include "components/ble/ServiceDiscovery.h"
 #include "components/ble/MotionService.h"
 #include "components/ble/SimpleWeatherService.h"
-#include "components/ble/OpenHaystack.h"
 #include "components/fs/FS.h"
 
 namespace Pinetime {
@@ -56,15 +55,6 @@ namespace Pinetime {
       void StartAdvertising();
       int OnGAPEvent(ble_gap_event* event);
       void StartDiscovery();
-
-      // Non-connectable Find My / OpenHaystack beacon mode - mutually exclusive with normal
-      // connectable advertising, since this chip only has one advertising set. StopOpenHaystackAdvertising()
-      // resumes normal advertising.
-      void StartOpenHaystackAdvertising();
-      void StopOpenHaystackAdvertising();
-      bool IsOpenHaystackActive() const {
-        return openHaystackActive;
-      };
 
       Pinetime::Controllers::MusicService& music() {
         return musicService;
@@ -128,7 +118,6 @@ namespace Pinetime {
       uint16_t connectionHandle = BLE_HS_CONN_HANDLE_NONE;
       uint8_t fastAdvCount = 0;
       uint8_t bondId[16] = {0};
-      bool openHaystackActive = false;
     };
 
     static NimbleController* nptr;
