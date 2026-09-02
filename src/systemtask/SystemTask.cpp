@@ -32,6 +32,11 @@ void MeasureBatteryTimerCallback(TimerHandle_t xTimer) {
   sysTask->PushMessage(Pinetime::System::Messages::MeasureBatteryTimerExpired);
 }
 
+void SettingsSaveTimerCallback(TimerHandle_t xTimer) {
+  auto* sysTask = static_cast<SystemTask*>(pvTimerGetTimerID(xTimer));
+  sysTask->PushMessage(Pinetime::System::Messages::SaveSettingsTimerExpired);
+}
+
 SystemTask::SystemTask(Drivers::SpiMaster& spi,
                        Pinetime::Drivers::SpiNorFlash& spiNorFlash,
                        Drivers::TwiMaster& twiMaster,
@@ -184,6 +189,9 @@ void SystemTask::Work() {
 
   measureBatteryTimer = xTimerCreate("measureBattery", batteryMeasurementPeriod, pdTRUE, this, MeasureBatteryTimerCallback);
   xTimerStart(measureBatteryTimer, portMAX_DELAY);
+
+  settingsSaveTimer = xTimerCreate("settingsSave", settingsSavePeriod, pdTRUE, this, SettingsSaveTimerCallback);
+  xTimerStart(settingsSaveTimer, portMAX_DELAY);
 
   constexpr TickType_t stateUpdatePeriod = pdMS_TO_TICKS(100);
   // Stores when the state (motion, watchdog, time persistence etc) was last updated
@@ -380,6 +388,16 @@ void SystemTask::Work() {
         case Messages::MeasureBatteryTimerExpired:
           batteryController.MeasureVoltage();
           break;
+        case Messages::SaveSettingsTimerExpired:
+          // No-op unless a setting has actually changed since the last save - see
+          // Settings::SaveSettings(). Backstops the normal save-on-screen-exit path
+          // against crashes, watchdog resets, and dead batteries. Skipped while sleeping
+          // since the SPI-NOR chip itself may be asleep then (GoToSleep() already saves
+          // once, right before the transition, while flash is still awake).
+          if (!IsSleeping()) {
+            settingsController.SaveSettings();
+          }
+          break;
         case Messages::BatteryPercentageUpdated:
           nimbleController.NotifyBatteryLevel(batteryController.PercentRemaining());
           break;
@@ -457,6 +475,12 @@ void SystemTask::GoToSleep() {
     return;
   }
   NRF_LOG_INFO("[systemtask] Going to sleep");
+  // Catches the common case where a Setting* screen is left open and the screen just
+  // times out on its own, rather than the user navigating back out - only a handful of
+  // top-level screens force-navigate to Clock on sleep (see DisplayApp's OnDisplayTaskSleeping
+  // handling), so an individual settings sub-screen's own destructor (where SaveSettings()
+  // normally runs) may not fire until long after this point. Flash is still awake here.
+  settingsController.SaveSettings();
   if (settingsController.GetAlwaysOnDisplay()) {
     displayApp.PushMessage(Pinetime::Applications::Display::Messages::GoToAOD);
   } else {

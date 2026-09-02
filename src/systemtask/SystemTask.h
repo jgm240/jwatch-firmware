@@ -136,6 +136,7 @@ namespace Pinetime {
       bool isBleDiscoveryTimerRunning = false;
       uint8_t bleDiscoveryTimer = 0;
       TimerHandle_t measureBatteryTimer;
+      TimerHandle_t settingsSaveTimer;
       uint8_t wakeLocksHeld = 0;
       SystemTaskState state = SystemTaskState::Running;
 
@@ -146,6 +147,10 @@ namespace Pinetime {
       void GoToSleep();
       void UpdateMotion();
       static constexpr TickType_t batteryMeasurementPeriod = pdMS_TO_TICKS(10 * 60 * 1000);
+      // Bounds how much a settings change can lose to a crash/watchdog reset or dead
+      // battery - Settings::SaveSettings() only actually touches flash when a value has
+      // changed since the last save, so this timer firing is a no-op most of the time.
+      static constexpr TickType_t settingsSavePeriod = pdMS_TO_TICKS(30 * 1000);
 
       SystemMonitor monitor;
     };
