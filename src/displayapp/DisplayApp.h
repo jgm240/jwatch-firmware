@@ -151,6 +151,13 @@ namespace Pinetime {
       lv_obj_t* nightModeOverlay = nullptr;
       void ApplyNightMode();
 
+      // Water Lock: triple-click the button to ignore all touchscreen input (so stray
+      // touches from water don't trigger swipes/taps); long-press the button to dismiss.
+      // The badge lives on lv_layer_top() for the same reason as nightModeOverlay - it
+      // needs to stay visible across screen changes without every screen knowing about it.
+      bool waterLockActive = false;
+      lv_obj_t* waterLockOverlay = nullptr;
+
       static constexpr size_t returnAppStackSize = 10;
       Utility::StaticStack<Apps, returnAppStackSize> returnAppStack;
       Utility::StaticStack<FullRefreshDirections, returnAppStackSize> appStackDirections;

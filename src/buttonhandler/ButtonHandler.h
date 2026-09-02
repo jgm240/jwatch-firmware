@@ -19,6 +19,9 @@ namespace Pinetime {
       TimerHandle_t buttonTimer;
       bool buttonPressed = false;
       States state = States::Idle;
+      // Counts presses within the click window while in States::Pressed, so a third
+      // press (see HandleEvent) can be recognized as TripleClick instead of DoubleClick.
+      uint8_t clickCount = 0;
     };
   }
 }

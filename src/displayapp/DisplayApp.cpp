@@ -212,6 +212,14 @@ void DisplayApp::Init() {
   lv_obj_set_style_local_border_width(nightModeOverlay, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
   lv_obj_set_style_local_radius(nightModeOverlay, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
   ApplyNightMode();
+
+  waterLockOverlay = lv_label_create(lv_layer_top(), nullptr);
+  lv_label_set_text_static(waterLockOverlay, "WATER LOCK\nHold button to unlock");
+  lv_label_set_align(waterLockOverlay, LV_LABEL_ALIGN_CENTER);
+  lv_obj_set_click(waterLockOverlay, false);
+  lv_obj_set_style_local_text_color(waterLockOverlay, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+  lv_obj_align(waterLockOverlay, nullptr, LV_ALIGN_IN_BOTTOM_MID, 0, -10);
+  lv_obj_set_hidden(waterLockOverlay, true);
 }
 
 void DisplayApp::ApplyNightMode() {
@@ -484,7 +492,7 @@ void DisplayApp::Refresh() {
         LoadNewScreen(Apps::RingsClosed, DisplayApp::FullRefreshDirections::None);
         break;
       case Messages::TouchEvent: {
-        if (state != States::Running) {
+        if (state != States::Running || waterLockActive) {
           break;
         }
         lvgl.SetNewTouchPoint(touchHandler.GetX(), touchHandler.GetY(), touchHandler.IsTouching());
@@ -540,6 +548,11 @@ void DisplayApp::Refresh() {
         }
         break;
       case Messages::ButtonLongPressed:
+        if (waterLockActive) {
+          waterLockActive = false;
+          lv_obj_set_hidden(waterLockOverlay, true);
+          break;
+        }
         if (locked && settingsController.GetPasscodeEnabled()) {
           break;
         }
@@ -570,6 +583,16 @@ void DisplayApp::Refresh() {
           LoadNewScreen(Apps::Notifications, DisplayApp::FullRefreshDirections::Down);
         }
         break;
+      case Messages::ButtonTripleClicked:
+        // Gated the same as the other lock-sensitive button actions above: entering Water
+        // Lock while passcode-locked would also disable touch on the PasscodeLock numpad
+        // itself, so require unlocking first.
+        if (locked && settingsController.GetPasscodeEnabled()) {
+          break;
+        }
+        waterLockActive = true;
+        lv_obj_set_hidden(waterLockOverlay, false);
+        break;
 
       case Messages::BleFirmwareUpdateStarted:
         LoadNewScreen(Apps::FirmwareUpdate, DisplayApp::FullRefreshDirections::Down);
@@ -584,7 +607,7 @@ void DisplayApp::Refresh() {
     }
   }
 
-  if (state == States::Running && touchHandler.IsTouching()) {
+  if (state == States::Running && !waterLockActive && touchHandler.IsTouching()) {
     currentScreen->OnTouchEvent(touchHandler.GetX(), touchHandler.GetY());
   }
 

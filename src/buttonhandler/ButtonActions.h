@@ -2,6 +2,6 @@
 
 namespace Pinetime {
   namespace Controllers {
-    enum class ButtonActions { None, Click, DoubleClick, LongPress, LongerPress };
+    enum class ButtonActions { None, Click, DoubleClick, TripleClick, LongPress, LongerPress };
   }
 }

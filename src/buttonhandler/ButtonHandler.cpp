@@ -26,6 +26,7 @@ ButtonActions ButtonHandler::HandleEvent(Events event) {
   switch (state) {
     case States::Idle:
       if (event == Events::Press) {
+        clickCount = 1;
         xTimerChangePeriod(buttonTimer, doubleClickTime, 0);
         xTimerStart(buttonTimer, 0);
         state = States::Pressed;
@@ -34,9 +35,15 @@ ButtonActions ButtonHandler::HandleEvent(Events event) {
     case States::Pressed:
       if (event == Events::Press) {
         if (xTaskGetTickCount() - releaseTime < doubleClickTime) {
-          xTimerStop(buttonTimer, 0);
-          state = States::Idle;
-          return ButtonActions::DoubleClick;
+          clickCount++;
+          if (clickCount >= 3) {
+            xTimerStop(buttonTimer, 0);
+            state = States::Idle;
+            clickCount = 0;
+            return ButtonActions::TripleClick;
+          }
+          // clickCount == 2: stay in Pressed and keep waiting for a possible third
+          // press; the Release branch below restarts the click window as usual.
         }
       } else if (event == Events::Release) {
         xTimerChangePeriod(buttonTimer, doubleClickTime, 0);
@@ -48,7 +55,9 @@ ButtonActions ButtonHandler::HandleEvent(Events event) {
           state = States::Holding;
         } else {
           state = States::Idle;
-          return ButtonActions::Click;
+          bool wasDoubleClick = clickCount >= 2;
+          clickCount = 0;
+          return wasDoubleClick ? ButtonActions::DoubleClick : ButtonActions::Click;
         }
       }
       break;
@@ -56,11 +65,13 @@ ButtonActions ButtonHandler::HandleEvent(Events event) {
       if (event == Events::Release) {
         xTimerStop(buttonTimer, 0);
         state = States::Idle;
+        clickCount = 0;
         return ButtonActions::Click;
       } else if (event == Events::Timer) {
         xTimerChangePeriod(buttonTimer, longerPressTime - longPressTime - doubleClickTime, 0);
         xTimerStart(buttonTimer, 0);
         state = States::LongHeld;
+        clickCount = 0;
         return ButtonActions::LongPress;
       }
       break;

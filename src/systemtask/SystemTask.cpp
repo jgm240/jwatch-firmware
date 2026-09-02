@@ -508,6 +508,9 @@ void SystemTask::HandleButtonAction(Controllers::ButtonActions action) {
     case Actions::DoubleClick:
       displayApp.PushMessage(Applications::Display::Messages::ButtonDoubleClicked);
       break;
+    case Actions::TripleClick:
+      displayApp.PushMessage(Applications::Display::Messages::ButtonTripleClicked);
+      break;
     case Actions::LongPress:
       displayApp.PushMessage(Applications::Display::Messages::ButtonLongPressed);
       break;

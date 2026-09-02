@@ -14,6 +14,7 @@ namespace Pinetime {
         ButtonLongPressed,
         ButtonLongerPressed,
         ButtonDoubleClicked,
+        ButtonTripleClicked,
         NewNotification,
         TimerDone,
         BleFirmwareUpdateStarted,
