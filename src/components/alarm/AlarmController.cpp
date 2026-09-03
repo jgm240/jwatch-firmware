@@ -170,12 +170,16 @@ void AlarmController::SaveSettingsToFile() const {
   }
   fs.DirClose(&systemDir);
   lfs_file_t alarmFile;
-  if (fs.FileOpen(&alarmFile, "/.system/alarm.dat", LFS_O_WRONLY | LFS_O_CREAT) != LFS_ERR_OK) {
+  // Write to a temp file, then atomically rename it over the real one - see
+  // Settings::SaveSettingsToFile() for why a direct in-place overwrite risks a torn
+  // write on real power loss (not a software reset) mid-write.
+  if (fs.FileOpen(&alarmFile, "/.system/alarm.dat.tmp", LFS_O_WRONLY | LFS_O_CREAT) != LFS_ERR_OK) {
     NRF_LOG_WARNING("[AlarmController] Failed to open alarm data file for saving");
     return;
   }
 
   fs.FileWrite(&alarmFile, reinterpret_cast<const uint8_t*>(&alarm), sizeof(alarm));
   fs.FileClose(&alarmFile);
+  fs.Rename("/.system/alarm.dat.tmp", "/.system/alarm.dat");
   NRF_LOG_INFO("[AlarmController] Saved alarm settings with format version %u to file", alarm.version);
 }
