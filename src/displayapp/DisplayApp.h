@@ -158,6 +158,22 @@ namespace Pinetime {
       bool waterLockActive = false;
       lv_obj_t* waterLockOverlay = nullptr;
 
+      // Watchface gesture cycling: a long-tap on the clock face arms a short window
+      // (see watchFaceGestureTimeout below) during which a horizontal swipe changes
+      // watchface and a vertical swipe changes its accent color, instead of the normal
+      // Clock-screen swipe navigation (Launcher/Notifications/QuickSettings). Armed one
+      // long-tap at a time rather than combined into a single continuous gesture,
+      // because the touch controller's own gesture engine reports LongPress and Slide
+      // as separate, mutually exclusive gestures - it can't detect a held-then-dragged
+      // touch as one event.
+      bool watchFaceGestureArmed = false;
+      TickType_t watchFaceGestureArmedTick = 0;
+      static constexpr TickType_t watchFaceGestureTimeout = pdMS_TO_TICKS(5000);
+      bool IsWatchFaceGestureArmed() const;
+      void ArmWatchFaceGesture();
+      void CycleWatchFace(bool forward);
+      void CycleWatchFaceColor(bool forward);
+
       static constexpr size_t returnAppStackSize = 10;
       Utility::StaticStack<Apps, returnAppStackSize> returnAppStack;
       Utility::StaticStack<FullRefreshDirections, returnAppStackSize> appStackDirections;

@@ -515,21 +515,44 @@ void DisplayApp::Refresh() {
         };
         if (!currentScreen->OnTouchEvent(gesture)) {
           if (currentApp == Apps::Clock) {
-            switch (gesture) {
-              case TouchEvents::SwipeUp:
-                LoadNewScreen(Apps::Launcher, DisplayApp::FullRefreshDirections::Up);
-                break;
-              case TouchEvents::SwipeDown:
-                LoadNewScreen(Apps::Notifications, DisplayApp::FullRefreshDirections::Down);
-                break;
-              case TouchEvents::SwipeRight:
-                LoadNewScreen(Apps::QuickSettings, DisplayApp::FullRefreshDirections::RightAnim);
-                break;
-              case TouchEvents::DoubleTap:
-                PushMessageToSystemTask(System::Messages::GoToSleep);
-                break;
-              default:
-                break;
+            if (IsWatchFaceGestureArmed() &&
+                (gesture == TouchEvents::SwipeLeft || gesture == TouchEvents::SwipeRight ||
+                 gesture == TouchEvents::SwipeUp || gesture == TouchEvents::SwipeDown)) {
+              watchFaceGestureArmedTick = xTaskGetTickCount();
+              switch (gesture) {
+                case TouchEvents::SwipeLeft:
+                  CycleWatchFace(true);
+                  break;
+                case TouchEvents::SwipeRight:
+                  CycleWatchFace(false);
+                  break;
+                case TouchEvents::SwipeUp:
+                  CycleWatchFaceColor(true);
+                  break;
+                default: // SwipeDown
+                  CycleWatchFaceColor(false);
+                  break;
+              }
+            } else {
+              switch (gesture) {
+                case TouchEvents::SwipeUp:
+                  LoadNewScreen(Apps::Launcher, DisplayApp::FullRefreshDirections::Up);
+                  break;
+                case TouchEvents::SwipeDown:
+                  LoadNewScreen(Apps::Notifications, DisplayApp::FullRefreshDirections::Down);
+                  break;
+                case TouchEvents::SwipeRight:
+                  LoadNewScreen(Apps::QuickSettings, DisplayApp::FullRefreshDirections::RightAnim);
+                  break;
+                case TouchEvents::LongTap:
+                  ArmWatchFaceGesture();
+                  break;
+                case TouchEvents::DoubleTap:
+                  PushMessageToSystemTask(System::Messages::GoToSleep);
+                  break;
+                default:
+                  break;
+              }
             }
           } else if (gesture == LoadDirToReturnSwipe(appStackDirections.Top())) {
             LoadPreviousScreen();
@@ -624,6 +647,68 @@ void DisplayApp::StartApp(Apps app, DisplayApp::FullRefreshDirections direction)
 
 void DisplayApp::Unlock() {
   locked = false;
+}
+
+bool DisplayApp::IsWatchFaceGestureArmed() const {
+  return watchFaceGestureArmed && (xTaskGetTickCount() - watchFaceGestureArmedTick) < watchFaceGestureTimeout;
+}
+
+void DisplayApp::ArmWatchFaceGesture() {
+  watchFaceGestureArmed = true;
+  watchFaceGestureArmedTick = xTaskGetTickCount();
+  motorController.RunForDuration(35);
+}
+
+void DisplayApp::CycleWatchFace(bool forward) {
+  size_t currentIndex = 0;
+  for (size_t i = 0; i < userWatchFaces.size(); i++) {
+    if (userWatchFaces[i].watchFace == settingsController.GetWatchFace()) {
+      currentIndex = i;
+      break;
+    }
+  }
+
+  size_t index = currentIndex;
+  for (size_t attempt = 0; attempt < userWatchFaces.size(); attempt++) {
+    index = forward ? (index + 1) % userWatchFaces.size() : (index + userWatchFaces.size() - 1) % userWatchFaces.size();
+    if (userWatchFaces[index].isAvailable(filesystem)) {
+      break;
+    }
+  }
+
+  settingsController.SetWatchFace(userWatchFaces[index].watchFace);
+  settingsController.SaveSettings();
+  LoadNewScreen(Apps::Clock, DisplayApp::FullRefreshDirections::None);
+}
+
+void DisplayApp::CycleWatchFaceColor(bool forward) {
+  using Colors = Controllers::Settings::Colors;
+  static constexpr uint8_t colorCount = 18;
+  auto step = [forward](Colors color) {
+    uint8_t value = static_cast<uint8_t>(color);
+    value = forward ? (value + 1) % colorCount : (value + colorCount - 1) % colorCount;
+    return static_cast<Colors>(value);
+  };
+
+  // Only the watchfaces that already share a single accent-color setting can be cycled
+  // this way. PineTimeStyle has its own multi-color picker (time/bar/background) that
+  // doesn't map onto one vertical swipe, and Terminal/Infineat/CasioStyleG7710/
+  // PrideFlag/Astronomy have a fixed visual identity with no color setting at all - the
+  // gesture is simply a no-op on those.
+  switch (settingsController.GetWatchFace()) {
+    case WatchFace::Digital:
+    case WatchFace::Analog:
+    case WatchFace::Modular:
+      settingsController.SetWatchFaceAccentColor(step(settingsController.GetWatchFaceAccentColor()));
+      break;
+    case WatchFace::Simple:
+      settingsController.SetWatchFaceSimpleColor(step(settingsController.GetWatchFaceSimpleColor()));
+      break;
+    default:
+      return;
+  }
+  settingsController.SaveSettings();
+  LoadNewScreen(Apps::Clock, DisplayApp::FullRefreshDirections::None);
 }
 
 void DisplayApp::LoadNewScreen(Apps app, DisplayApp::FullRefreshDirections direction) {
