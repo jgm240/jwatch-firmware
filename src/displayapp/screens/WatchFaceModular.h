@@ -10,7 +10,6 @@
 #include "displayapp/widgets/complications/Complication.h"
 #include "components/datetime/DateTimeController.h"
 #include "components/settings/Settings.h"
-#include "components/motion/MotionController.h"
 #include "displayapp/apps/Apps.h"
 #include "displayapp/Controllers.h"
 #include "utility/DirtyValue.h"
@@ -30,7 +29,6 @@ namespace Pinetime {
       private:
         Controllers::DateTime& dateTimeController;
         Controllers::Settings& settingsController;
-        Controllers::MotionController& motionController;
 
         Utility::DirtyValue<std::chrono::time_point<std::chrono::system_clock, std::chrono::minutes>> currentDateTime {};
 

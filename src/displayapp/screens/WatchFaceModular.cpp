@@ -1,7 +1,6 @@
 #include "displayapp/screens/WatchFaceModular.h"
 
 #include <lvgl/lvgl.h>
-#include <algorithm>
 
 #include "displayapp/widgets/complications/ComplicationFactory.h"
 #include "displayapp/Colors.h"
@@ -21,29 +20,10 @@ namespace {
     LV_ALIGN_IN_BOTTOM_RIGHT,
   };
   constexpr std::array<lv_coord_t, Pinetime::Controllers::Settings::modularWatchFaceSlots> slotOffsetX = {0, 0, 10, -10, 0, 0};
-
-  // Cheap 2D parallax, not real 3D tilt - see WatchFaceDigital.cpp for the full rationale.
-  constexpr int16_t tiltDivisor = 90;
-  constexpr lv_coord_t tiltMaxOffsetPerStrength = 3;
-  constexpr lv_coord_t tiltMaxOffsetCap = 100;
-
-  lv_coord_t TiltOffset(int16_t raw, uint8_t strength) {
-    lv_coord_t maxOffset = std::min(static_cast<lv_coord_t>(static_cast<lv_coord_t>(strength) * tiltMaxOffsetPerStrength), tiltMaxOffsetCap);
-    if (maxOffset == 0) {
-      return 0;
-    }
-    int32_t offset = raw / tiltDivisor;
-    if (offset > maxOffset) {
-      offset = maxOffset;
-    } else if (offset < -maxOffset) {
-      offset = -maxOffset;
-    }
-    return static_cast<lv_coord_t>(offset);
-  }
 }
 
 WatchFaceModular::WatchFaceModular(Controllers::DateTime& dateTimeController, Controllers::Settings& settingsController, AppControllers& controllers)
-  : dateTimeController {dateTimeController}, settingsController {settingsController}, motionController {controllers.motionController} {
+  : dateTimeController {dateTimeController}, settingsController {settingsController} {
 
   label_time = lv_label_create(lv_scr_act(), nullptr);
   lv_obj_set_style_local_text_font(label_time, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_extrabold_compressed);
@@ -78,10 +58,9 @@ WatchFaceModular::~WatchFaceModular() {
 void WatchFaceModular::Refresh() {
   secondsSquare.SetValue(dateTimeController.Seconds());
 
-  uint8_t tiltStrength = settingsController.GetTiltParallaxStrength();
-  lv_coord_t tiltX = TiltOffset(motionController.X(), tiltStrength);
-  lv_coord_t tiltY = TiltOffset(motionController.Y(), tiltStrength);
-  lv_obj_align(label_time, lv_scr_act(), LV_ALIGN_CENTER, tiltX, tiltY);
+  // Parallax now happens once for the whole screen, in DisplayApp::ApplyUiParallax() -
+  // see that for why the per-watchface version this used to be here was removed.
+  lv_obj_align(label_time, lv_scr_act(), LV_ALIGN_CENTER, 0, 0);
   lv_obj_realign(label_date);
 
   currentDateTime = std::chrono::time_point_cast<std::chrono::minutes>(dateTimeController.CurrentDateTime());

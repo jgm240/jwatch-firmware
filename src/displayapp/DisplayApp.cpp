@@ -103,6 +103,29 @@ namespace {
     auto* dispApp = static_cast<DisplayApp*>(pvTimerGetTimerID(xTimer));
     dispApp->PushMessage(Display::Messages::TimerDone);
   }
+
+  // Cheap 2D parallax, not real 3D tilt (this hardware/LVGL version has no perspective
+  // transform at all) - same tuning this fork's original per-watchface tilt effect used,
+  // now applied to the whole screen instead of just the time label. Strength is
+  // user-adjustable (Settings > Tilt Parallax, 0=off..140=max); tiltMaxOffsetCap keeps
+  // the top of that range from pushing content off-screen entirely.
+  constexpr int16_t tiltDivisor = 90;
+  constexpr lv_coord_t tiltMaxOffsetPerStrength = 3;
+  constexpr lv_coord_t tiltMaxOffsetCap = 100;
+
+  lv_coord_t TiltOffset(int16_t raw, uint8_t strength) {
+    lv_coord_t maxOffset = std::min(static_cast<lv_coord_t>(static_cast<lv_coord_t>(strength) * tiltMaxOffsetPerStrength), tiltMaxOffsetCap);
+    if (maxOffset == 0) {
+      return 0;
+    }
+    int32_t offset = raw / tiltDivisor;
+    if (offset > maxOffset) {
+      offset = maxOffset;
+    } else if (offset < -maxOffset) {
+      offset = -maxOffset;
+    }
+    return static_cast<lv_coord_t>(offset);
+  }
 }
 
 DisplayApp::DisplayApp(Drivers::St7789& lcd,
@@ -231,6 +254,16 @@ void DisplayApp::ApplyNightMode() {
     active = hour >= start || hour < end;
   }
   lv_obj_set_hidden(nightModeOverlay, !active);
+}
+
+void DisplayApp::ApplyUiParallax() {
+  if (state != States::Running || lvgl.GetFullRefresh()) {
+    return;
+  }
+  uint8_t strength = settingsController.GetTiltParallaxStrength();
+  lv_coord_t tiltX = TiltOffset(motionController.X(), strength);
+  lv_coord_t tiltY = TiltOffset(motionController.Y(), strength);
+  lv_obj_set_pos(lv_scr_act(), tiltX, tiltY);
 }
 
 TickType_t DisplayApp::CalculateSleepTime() {
@@ -634,6 +667,8 @@ void DisplayApp::Refresh() {
     currentScreen->OnTouchEvent(touchHandler.GetX(), touchHandler.GetY());
   }
 
+  ApplyUiParallax();
+
   if (nextApp != Apps::None) {
     LoadNewScreen(nextApp, nextDirection);
     nextApp = Apps::None;
@@ -726,6 +761,12 @@ void DisplayApp::LoadScreen(Apps app, DisplayApp::FullRefreshDirections directio
   lvgl.CancelTap();
   lv_disp_trig_activity(nullptr);
   motorController.StopRinging();
+
+  // Undo any pending UI Parallax offset before tearing down the old screen's widgets and
+  // building the new ones on the same, persistent lv_scr_act() - otherwise a screen change
+  // mid-tilt would carry the old offset into the new screen's construction, and a
+  // non-zero offset here could also throw off the custom scroll-transition below.
+  lv_obj_set_pos(lv_scr_act(), 0, 0);
 
   currentScreen.reset(nullptr);
   SetFullRefresh(direction);

@@ -2,7 +2,6 @@
 
 #include <lvgl/lvgl.h>
 #include <cstdio>
-#include <algorithm>
 
 #include "displayapp/InfiniTimeTheme.h"
 #include "components/battery/BatteryController.h"
@@ -15,33 +14,6 @@
 #include "displayapp/Colors.h"
 
 using namespace Pinetime::Applications::Screens;
-
-namespace {
-  // Cheap 2D parallax, not real 3D tilt (this hardware/LVGL version has no perspective
-  // transform at all) - just nudges the time label a few px opposite to the accelerometer's
-  // tilt, reusing readings SystemTask already samples continuously. Strength is user-adjustable
-  // (Settings > Tilt Parallax, 0=off..140=max); the earlier fixed 200/6 combo produced
-  // sub-pixel, imperceptible offsets for ordinary hand tilts, so the divisor here is lower.
-  // tiltMaxOffsetCap keeps the top of that 140-wide range from pushing the label off-screen
-  // entirely - strength still scales the effect linearly up to that cap.
-  constexpr int16_t tiltDivisor = 90;
-  constexpr lv_coord_t tiltMaxOffsetPerStrength = 3;
-  constexpr lv_coord_t tiltMaxOffsetCap = 100;
-
-  lv_coord_t TiltOffset(int16_t raw, uint8_t strength) {
-    lv_coord_t maxOffset = std::min(static_cast<lv_coord_t>(static_cast<lv_coord_t>(strength) * tiltMaxOffsetPerStrength), tiltMaxOffsetCap);
-    if (maxOffset == 0) {
-      return 0;
-    }
-    int32_t offset = raw / tiltDivisor;
-    if (offset > maxOffset) {
-      offset = maxOffset;
-    } else if (offset < -maxOffset) {
-      offset = -maxOffset;
-    }
-    return static_cast<lv_coord_t>(offset);
-  }
-}
 
 WatchFaceDigital::WatchFaceDigital(Controllers::DateTime& dateTimeController,
                                    const Controllers::Battery& batteryController,
@@ -123,12 +95,11 @@ void WatchFaceDigital::Refresh() {
 
   UpdateWeatherEffect();
 
-  uint8_t tiltStrength = settingsController.GetTiltParallaxStrength();
-  lv_coord_t tiltX = TiltOffset(motionController.X(), tiltStrength);
-  lv_coord_t tiltY = TiltOffset(motionController.Y(), tiltStrength);
+  // Parallax now happens once for the whole screen, in DisplayApp::ApplyUiParallax() -
+  // see that for why the per-watchface version this used to be here was removed.
   lv_align_t timeAlign =
     settingsController.GetClockType() == Controllers::Settings::ClockType::H12 ? LV_ALIGN_IN_RIGHT_MID : LV_ALIGN_CENTER;
-  lv_obj_align(label_time, lv_scr_act(), timeAlign, tiltX, tiltY);
+  lv_obj_align(label_time, lv_scr_act(), timeAlign, 0, 0);
 
   currentDateTime = std::chrono::time_point_cast<std::chrono::minutes>(dateTimeController.CurrentDateTime());
 

@@ -1,7 +1,6 @@
 #include "displayapp/screens/WatchFaceSimple.h"
 
 #include <lvgl/lvgl.h>
-#include <algorithm>
 
 #include "displayapp/InfiniTimeTheme.h"
 #include "displayapp/Colors.h"
@@ -23,25 +22,6 @@ namespace {
       default:
         return &jetbrains_mono_extrabold_compressed;
     }
-  }
-
-  // Cheap 2D parallax, not real 3D tilt - see WatchFaceDigital.cpp for the full rationale.
-  constexpr int16_t tiltDivisor = 90;
-  constexpr lv_coord_t tiltMaxOffsetPerStrength = 3;
-  constexpr lv_coord_t tiltMaxOffsetCap = 100;
-
-  lv_coord_t TiltOffset(int16_t raw, uint8_t strength) {
-    lv_coord_t maxOffset = std::min(static_cast<lv_coord_t>(static_cast<lv_coord_t>(strength) * tiltMaxOffsetPerStrength), tiltMaxOffsetCap);
-    if (maxOffset == 0) {
-      return 0;
-    }
-    int32_t offset = raw / tiltDivisor;
-    if (offset > maxOffset) {
-      offset = maxOffset;
-    } else if (offset < -maxOffset) {
-      offset = -maxOffset;
-    }
-    return static_cast<lv_coord_t>(offset);
   }
 }
 
@@ -88,10 +68,9 @@ void WatchFaceSimple::Refresh() {
 
   secondsSquare.SetValue(dateTimeController.Seconds());
 
-  uint8_t tiltStrength = settingsController.GetTiltParallaxStrength();
-  lv_coord_t tiltX = TiltOffset(motionController.X(), tiltStrength);
-  lv_coord_t tiltY = TiltOffset(motionController.Y(), tiltStrength);
-  lv_obj_align(label_time, lv_scr_act(), LV_ALIGN_CENTER, tiltX, tiltY);
+  // Parallax now happens once for the whole screen, in DisplayApp::ApplyUiParallax() -
+  // see that for why the per-watchface version this used to be here was removed.
+  lv_obj_align(label_time, lv_scr_act(), LV_ALIGN_CENTER, 0, 0);
   lv_obj_realign(label_date);
 
   currentDateTime = std::chrono::time_point_cast<std::chrono::minutes>(dateTimeController.CurrentDateTime());

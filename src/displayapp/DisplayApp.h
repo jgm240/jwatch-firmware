@@ -151,6 +151,15 @@ namespace Pinetime {
       lv_obj_t* nightModeOverlay = nullptr;
       void ApplyNightMode();
 
+      // UI Parallax: nudges the whole active screen object (lv_scr_act(), which every
+      // screen's widgets are children of) opposite to the accelerometer's tilt, so the
+      // entire UI shifts together rather than just the watchface's time label the way
+      // the original per-watchface tilt effect worked. Reuses the same Settings > Tilt
+      // Parallax strength setting. Suspended during the app's own custom scroll-transition
+      // (see LittleVgl::GetFullRefresh()) since that already repositions pixels at the
+      // flush level - stacking this on top would visually fight it.
+      void ApplyUiParallax();
+
       // Water Lock: triple-click the button to ignore all touchscreen input (so stray
       // touches from water don't trigger swipes/taps); long-press the button to dismiss.
       // The badge lives on lv_layer_top() for the same reason as nightModeOverlay - it
