@@ -19,6 +19,7 @@ namespace {
     {Pinetime::Applications::Widgets::QuickAction::NotificationToggle, "Notifications"},
     {Pinetime::Applications::Widgets::QuickAction::OpenSettings, "Settings"},
     {Pinetime::Applications::Widgets::QuickAction::Activity, "Activity"},
+    {Pinetime::Applications::Widgets::QuickAction::FindMyPhone, "Find My Phone"},
   }};
 
   constexpr std::array<const char*, SettingQuickActions::nSlots> slotTitles = {"Top left", "Top right", "Bottom left", "Bottom right"};

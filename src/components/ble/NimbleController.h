@@ -14,6 +14,7 @@
 #include "components/ble/CurrentTimeService.h"
 #include "components/ble/DeviceInformationService.h"
 #include "components/ble/DfuService.h"
+#include "components/ble/FindMyPhoneService.h"
 #include "components/ble/FSService.h"
 #include "components/ble/HeartRateService.h"
 #include "components/ble/HidService.h"
@@ -23,6 +24,7 @@
 #include "components/ble/ServiceDiscovery.h"
 #include "components/ble/MotionService.h"
 #include "components/ble/SimpleWeatherService.h"
+#include "components/ble/WatchNameService.h"
 #include "components/fs/FS.h"
 
 namespace Pinetime {
@@ -38,6 +40,7 @@ namespace Pinetime {
     class Ble;
     class DateTime;
     class NotificationManager;
+    class Settings;
 
     class NimbleController {
 
@@ -50,7 +53,8 @@ namespace Pinetime {
                        Pinetime::Drivers::SpiNorFlash& spiNorFlash,
                        HeartRateController& heartRateController,
                        MotionController& motionController,
-                       FS& fs);
+                       FS& fs,
+                       Settings& settingsController);
       void Init();
       void StartAdvertising();
       int OnGAPEvent(ble_gap_event* event);
@@ -76,8 +80,18 @@ namespace Pinetime {
         return hidService;
       };
 
+      Pinetime::Controllers::FindMyPhoneService& findMyPhone() {
+        return findMyPhoneService;
+      };
+
       uint16_t connHandle();
       void NotifyBatteryLevel(uint8_t level);
+
+      // Applies a new Bluetooth device name: updates the live GAP name, persists it to
+      // Settings, and lets the next advertising cycle (started organically after the write's
+      // connection eventually disconnects) pick it up - see the .cpp for why this doesn't
+      // call StartAdvertising() itself.
+      void SetDeviceName(const char* name);
 
       void RestartFastAdv() {
         fastAdvCount = 0;
@@ -90,12 +104,14 @@ namespace Pinetime {
       void PersistBond(struct ble_gap_conn_desc& desc);
       void RestoreBond();
 
-      static constexpr const char* deviceName = "JWatch";
+      static constexpr size_t deviceNameMaxLength = 20;
+      char deviceName[deviceNameMaxLength + 1];
       Pinetime::System::SystemTask& systemTask;
       Ble& bleController;
       DateTime& dateTimeController;
       Pinetime::Drivers::SpiNorFlash& spiNorFlash;
       FS& fs;
+      Settings& settingsController;
       DfuService dfuService;
 
       DeviceInformationService deviceInformationService;
@@ -110,6 +126,8 @@ namespace Pinetime {
       ImmediateAlertService immediateAlertService;
       HeartRateService heartRateService;
       HidService hidService;
+      FindMyPhoneService findMyPhoneService;
+      WatchNameService watchNameService;
       MotionService motionService;
       FSService fsService;
       ServiceDiscovery serviceDiscovery;

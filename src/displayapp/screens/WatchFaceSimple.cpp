@@ -50,6 +50,13 @@ WatchFaceSimple::WatchFaceSimple(Controllers::DateTime& dateTimeController,
   lv_label_set_text_static(label_date, "");
   lv_obj_align(label_date, label_time, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
 
+  if (settingsController.GetShowWatchNameOnFace()) {
+    label_watchName = lv_label_create(lv_scr_act(), nullptr);
+    lv_obj_set_style_local_text_color(label_watchName, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, secondaryTextColor);
+    lv_label_set_text_fmt(label_watchName, "%s", settingsController.GetWatchName());
+    lv_obj_align(label_watchName, lv_scr_act(), LV_ALIGN_IN_TOP_MID, 0, 10);
+  }
+
   stepsComplication.Create(lv_scr_act(), LV_ALIGN_IN_BOTTOM_MID, 0, 0);
 
   secondsSquare.Create(lv_scr_act(), Applications::Convert(settingsController.GetWatchFaceSimpleColor()));

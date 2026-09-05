@@ -11,6 +11,7 @@
 #include "components/battery/BatteryController.h"
 #include "displayapp/widgets/StatusIcons.h"
 #include "displayapp/widgets/QuickAction.h"
+#include "components/ble/NimbleController.h"
 
 namespace Pinetime {
 
@@ -26,7 +27,8 @@ namespace Pinetime {
                       Controllers::MotorController& motorController,
                       Pinetime::Controllers::Settings& settingsController,
                       const Controllers::Ble& bleController,
-                      const Controllers::AlarmController& alarmController);
+                      const Controllers::AlarmController& alarmController,
+                      Controllers::NimbleController& nimble);
 
         ~QuickSettings() override;
 
@@ -42,6 +44,7 @@ namespace Pinetime {
         Controllers::BrightnessController& brightness;
         Controllers::MotorController& motorController;
         Controllers::Settings& settingsController;
+        Controllers::NimbleController& nimble;
 
         lv_task_t* taskUpdate;
         lv_obj_t* label_time;

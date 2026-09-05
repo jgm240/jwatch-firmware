@@ -64,7 +64,7 @@ namespace Pinetime {
 
           {Symbols::list, "Button radius", Apps::SettingButtonRadius},
           {Symbols::tachometer, "Activity goals", Apps::SettingActivityGoals},
-          {Symbols::none, "", Apps::None},
+          {Symbols::info, "Watch name", Apps::SettingWatchName},
           {Symbols::moon, "Bedtime", Apps::SettingBedtime},
 
           {Symbols::tachometer, "Tilt parallax", Apps::SettingTiltParallax},

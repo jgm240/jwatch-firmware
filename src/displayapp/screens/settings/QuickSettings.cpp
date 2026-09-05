@@ -35,12 +35,14 @@ QuickSettings::QuickSettings(Pinetime::Applications::DisplayApp* app,
                              Controllers::MotorController& motorController,
                              Pinetime::Controllers::Settings& settingsController,
                              const Controllers::Ble& bleController,
-                             const Controllers::AlarmController& alarmController)
+                             const Controllers::AlarmController& alarmController,
+                             Controllers::NimbleController& nimble)
   : app {app},
     dateTimeController {dateTimeController},
     brightness {brightness},
     motorController {motorController},
     settingsController {settingsController},
+    nimble {nimble},
     statusIcons(batteryController, bleController, alarmController) {
 
   statusIcons.Create();
@@ -121,6 +123,9 @@ void QuickSettings::CreateActionButton(size_t slot, Widgets::QuickAction action)
     case Widgets::QuickAction::Activity:
       lv_label_set_text_static(label, Symbols::tachometer);
       break;
+    case Widgets::QuickAction::FindMyPhone:
+      lv_label_set_text_static(label, Symbols::phone);
+      break;
   }
 }
 
@@ -177,6 +182,11 @@ void QuickSettings::OnButtonEvent(lv_obj_t* object) {
 
       case Widgets::QuickAction::Activity:
         app->StartApp(Apps::ActivityRings, DisplayApp::FullRefreshDirections::Up);
+        break;
+
+      case Widgets::QuickAction::FindMyPhone:
+        nimble.findMyPhone().SendTrigger();
+        motorController.RunForDuration(35);
         break;
     }
     return;

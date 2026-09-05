@@ -41,6 +41,7 @@ namespace Pinetime {
 
         lv_obj_t* label_time;
         lv_obj_t* label_date;
+        lv_obj_t* label_watchName = nullptr;
         Widgets::SecondsSquare secondsSquare;
 
         Widgets::StepsComplication stepsComplication;

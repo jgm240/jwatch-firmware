@@ -456,6 +456,7 @@ list(APPEND SOURCE_FILES
         displayapp/screens/settings/SettingWatchFaceSimpleStyle.cpp
         displayapp/screens/settings/SettingAppMenuStyle.cpp
         displayapp/screens/settings/SettingNightstand.cpp
+        displayapp/screens/settings/SettingWatchName.cpp
         displayapp/screens/settings/SettingActivityGoals.cpp
         displayapp/screens/settings/SettingWatchFaceColor.cpp
         displayapp/screens/settings/SettingButtonRadius.cpp
@@ -513,6 +514,8 @@ list(APPEND SOURCE_FILES
         components/ble/ServiceDiscovery.cpp
         components/ble/HeartRateService.cpp
         components/ble/HidService.cpp
+        components/ble/FindMyPhoneService.cpp
+        components/ble/WatchNameService.cpp
         components/ble/MotionService.cpp
         components/firmwarevalidator/FirmwareValidator.cpp
         components/motor/MotorController.cpp
@@ -587,6 +590,8 @@ list(APPEND RECOVERY_SOURCE_FILES
         components/ble/NavigationService.cpp
         components/ble/HeartRateService.cpp
         components/ble/HidService.cpp
+        components/ble/FindMyPhoneService.cpp
+        components/ble/WatchNameService.cpp
         components/ble/MotionService.cpp
         components/firmwarevalidator/FirmwareValidator.cpp
         components/settings/Settings.cpp
@@ -966,7 +971,7 @@ target_compile_options(littlefs PRIVATE
 
 # Build autonomous binary (without support for bootloader)
 set(EXECUTABLE_NAME "pinetime-app")
-set(EXECUTABLE_FILE_NAME ${EXECUTABLE_NAME}-${pinetime_VERSION_MAJOR}.${pinetime_VERSION_MINOR}.${pinetime_VERSION_PATCH})
+set(EXECUTABLE_FILE_NAME ${EXECUTABLE_NAME}-${jwatch_VERSION_MAJOR}.${jwatch_VERSION_MINOR}.${jwatch_VERSION_PATCH})
 set(NRF5_LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/gcc_nrf52.ld")
 add_executable(${EXECUTABLE_NAME} ${SOURCE_FILES})
 set_target_properties(${EXECUTABLE_NAME} PROPERTIES OUTPUT_NAME ${EXECUTABLE_FILE_NAME})
@@ -982,7 +987,7 @@ target_compile_options(${EXECUTABLE_NAME} PUBLIC
 
 set_target_properties(${EXECUTABLE_NAME} PROPERTIES
         SUFFIX ".out"
-        LINK_FLAGS "-mthumb -mabi=aapcs -L ${NRF5_SDK_PATH}/modules/nrfx/mdk -T${NRF5_LINKER_SCRIPT} -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections -Wl,--print-memory-usage --specs=nano.specs -Wl,-Map=${EXECUTABLE_FILE_NAME}.map"
+        LINK_FLAGS "-mthumb -mabi=aapcs -L ${NRF5_SDK_PATH}/modules/nrfx/mdk -T\"${NRF5_LINKER_SCRIPT}\" -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections -Wl,--print-memory-usage --specs=nano.specs -Wl,-Map=${EXECUTABLE_FILE_NAME}.map"
         )
 
 add_custom_command(TARGET ${EXECUTABLE_NAME}
@@ -998,10 +1003,10 @@ endif()
 
 # Build binary intended to be used by bootloader
 set(EXECUTABLE_MCUBOOT_NAME "pinetime-mcuboot-app")
-set(EXECUTABLE_MCUBOOT_FILE_NAME ${EXECUTABLE_MCUBOOT_NAME}-${pinetime_VERSION_MAJOR}.${pinetime_VERSION_MINOR}.${pinetime_VERSION_PATCH})
-set(IMAGE_MCUBOOT_FILE_NAME_HEX ${EXECUTABLE_MCUBOOT_NAME}-image-${pinetime_VERSION_MAJOR}.${pinetime_VERSION_MINOR}.${pinetime_VERSION_PATCH}.hex)
-set(IMAGE_MCUBOOT_FILE_NAME_BIN ${EXECUTABLE_MCUBOOT_NAME}-image-${pinetime_VERSION_MAJOR}.${pinetime_VERSION_MINOR}.${pinetime_VERSION_PATCH}.bin)
-set(DFU_MCUBOOT_FILE_NAME ${EXECUTABLE_MCUBOOT_NAME}-dfu-${pinetime_VERSION_MAJOR}.${pinetime_VERSION_MINOR}.${pinetime_VERSION_PATCH}.zip)
+set(EXECUTABLE_MCUBOOT_FILE_NAME ${EXECUTABLE_MCUBOOT_NAME}-${jwatch_VERSION_MAJOR}.${jwatch_VERSION_MINOR}.${jwatch_VERSION_PATCH})
+set(IMAGE_MCUBOOT_FILE_NAME_HEX ${EXECUTABLE_MCUBOOT_NAME}-image-${jwatch_VERSION_MAJOR}.${jwatch_VERSION_MINOR}.${jwatch_VERSION_PATCH}.hex)
+set(IMAGE_MCUBOOT_FILE_NAME_BIN ${EXECUTABLE_MCUBOOT_NAME}-image-${jwatch_VERSION_MAJOR}.${jwatch_VERSION_MINOR}.${jwatch_VERSION_PATCH}.bin)
+set(DFU_MCUBOOT_FILE_NAME ${EXECUTABLE_MCUBOOT_NAME}-dfu-${jwatch_VERSION_MAJOR}.${jwatch_VERSION_MINOR}.${jwatch_VERSION_PATCH}.zip)
 set(NRF5_LINKER_SCRIPT_MCUBOOT "${CMAKE_SOURCE_DIR}/gcc_nrf52-mcuboot.ld")
 add_executable(${EXECUTABLE_MCUBOOT_NAME} ${SOURCE_FILES})
 target_link_libraries(${EXECUTABLE_MCUBOOT_NAME} nimble nrf-sdk lvgl littlefs infinitime_fonts infinitime_apps)
@@ -1017,7 +1022,7 @@ target_compile_options(${EXECUTABLE_MCUBOOT_NAME} PUBLIC
 
 set_target_properties(${EXECUTABLE_MCUBOOT_NAME} PROPERTIES
         SUFFIX ".out"
-        LINK_FLAGS "-mthumb -mabi=aapcs -L ${NRF5_SDK_PATH}/modules/nrfx/mdk -T${NRF5_LINKER_SCRIPT_MCUBOOT} -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections -Wl,--print-memory-usage --specs=nano.specs -Wl,-Map=${EXECUTABLE_MCUBOOT_FILE_NAME}.map"
+        LINK_FLAGS "-mthumb -mabi=aapcs -L ${NRF5_SDK_PATH}/modules/nrfx/mdk -T\"${NRF5_LINKER_SCRIPT_MCUBOOT}\" -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections -Wl,--print-memory-usage --specs=nano.specs -Wl,-Map=${EXECUTABLE_MCUBOOT_FILE_NAME}.map"
         )
 
 add_custom_command(TARGET ${EXECUTABLE_MCUBOOT_NAME}
@@ -1044,7 +1049,7 @@ endif()
 
 # InfiniTime recovery firmware (autonomous)
 set(EXECUTABLE_RECOVERY_NAME "pinetime-recovery")
-set(EXECUTABLE_RECOVERY_FILE_NAME ${EXECUTABLE_RECOVERY_NAME}-${pinetime_VERSION_MAJOR}.${pinetime_VERSION_MINOR}.${pinetime_VERSION_PATCH})
+set(EXECUTABLE_RECOVERY_FILE_NAME ${EXECUTABLE_RECOVERY_NAME}-${jwatch_VERSION_MAJOR}.${jwatch_VERSION_MINOR}.${jwatch_VERSION_PATCH})
 add_executable(${EXECUTABLE_RECOVERY_NAME} ${RECOVERY_SOURCE_FILES})
 target_link_libraries(${EXECUTABLE_RECOVERY_NAME} nimble nrf-sdk littlefs infinitime_fonts infinitime_apps)
 set_target_properties(${EXECUTABLE_RECOVERY_NAME} PROPERTIES OUTPUT_NAME ${EXECUTABLE_RECOVERY_FILE_NAME})
@@ -1060,7 +1065,7 @@ target_compile_options(${EXECUTABLE_RECOVERY_NAME} PUBLIC
 
 set_target_properties(${EXECUTABLE_RECOVERY_NAME} PROPERTIES
         SUFFIX ".out"
-        LINK_FLAGS "-mthumb -mabi=aapcs -L ${NRF5_SDK_PATH}/modules/nrfx/mdk -T${NRF5_LINKER_SCRIPT} -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections -Wl,--print-memory-usage --specs=nano.specs -Wl,-Map=${EXECUTABLE_RECOVERY_FILE_NAME}.map"
+        LINK_FLAGS "-mthumb -mabi=aapcs -L ${NRF5_SDK_PATH}/modules/nrfx/mdk -T\"${NRF5_LINKER_SCRIPT}\" -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections -Wl,--print-memory-usage --specs=nano.specs -Wl,-Map=${EXECUTABLE_RECOVERY_FILE_NAME}.map"
         )
 
 add_custom_command(TARGET ${EXECUTABLE_RECOVERY_NAME}
@@ -1073,10 +1078,10 @@ add_custom_command(TARGET ${EXECUTABLE_RECOVERY_NAME}
 
 # InfiniTime recovery firmware (mcuboot)
 set(EXECUTABLE_RECOVERY_MCUBOOT_NAME "pinetime-mcuboot-recovery")
-set(EXECUTABLE_RECOVERY_MCUBOOT_FILE_NAME ${EXECUTABLE_RECOVERY_MCUBOOT_NAME}-${pinetime_VERSION_MAJOR}.${pinetime_VERSION_MINOR}.${pinetime_VERSION_PATCH})
-set(IMAGE_RECOVERY_MCUBOOT_FILE_NAME ${EXECUTABLE_RECOVERY_MCUBOOT_NAME}-image-${pinetime_VERSION_MAJOR}.${pinetime_VERSION_MINOR}.${pinetime_VERSION_PATCH})
+set(EXECUTABLE_RECOVERY_MCUBOOT_FILE_NAME ${EXECUTABLE_RECOVERY_MCUBOOT_NAME}-${jwatch_VERSION_MAJOR}.${jwatch_VERSION_MINOR}.${jwatch_VERSION_PATCH})
+set(IMAGE_RECOVERY_MCUBOOT_FILE_NAME ${EXECUTABLE_RECOVERY_MCUBOOT_NAME}-image-${jwatch_VERSION_MAJOR}.${jwatch_VERSION_MINOR}.${jwatch_VERSION_PATCH})
 set(IMAGE_RECOVERY_MCUBOOT_FILE_NAME_HEX ${IMAGE_RECOVERY_MCUBOOT_FILE_NAME}.hex)
-set(DFU_RECOVERY_MCUBOOT_FILE_NAME ${EXECUTABLE_RECOVERY_MCUBOOT_NAME}-dfu-${pinetime_VERSION_MAJOR}.${pinetime_VERSION_MINOR}.${pinetime_VERSION_PATCH}.zip)
+set(DFU_RECOVERY_MCUBOOT_FILE_NAME ${EXECUTABLE_RECOVERY_MCUBOOT_NAME}-dfu-${jwatch_VERSION_MAJOR}.${jwatch_VERSION_MINOR}.${jwatch_VERSION_PATCH}.zip)
 add_executable(${EXECUTABLE_RECOVERY_MCUBOOT_NAME} ${RECOVERY_SOURCE_FILES})
 target_link_libraries(${EXECUTABLE_RECOVERY_MCUBOOT_NAME} nimble nrf-sdk littlefs infinitime_fonts infinitime_apps)
 set_target_properties(${EXECUTABLE_RECOVERY_MCUBOOT_NAME} PROPERTIES OUTPUT_NAME ${EXECUTABLE_RECOVERY_MCUBOOT_FILE_NAME})
@@ -1092,7 +1097,7 @@ target_compile_options(${EXECUTABLE_RECOVERY_MCUBOOT_NAME} PUBLIC
 
 set_target_properties(${EXECUTABLE_RECOVERY_MCUBOOT_NAME} PROPERTIES
         SUFFIX ".out"
-        LINK_FLAGS "-mthumb -mabi=aapcs -L ${NRF5_SDK_PATH}/modules/nrfx/mdk -T${NRF5_LINKER_SCRIPT_MCUBOOT} -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections -Wl,--print-memory-usage --specs=nano.specs -Wl,-Map=${EXECUTABLE_GRAPHICS_FILE_NAME}.map"
+        LINK_FLAGS "-mthumb -mabi=aapcs -L ${NRF5_SDK_PATH}/modules/nrfx/mdk -T\"${NRF5_LINKER_SCRIPT_MCUBOOT}\" -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections -Wl,--print-memory-usage --specs=nano.specs -Wl,-Map=${EXECUTABLE_GRAPHICS_FILE_NAME}.map"
         )
 
 add_custom_command(TARGET ${EXECUTABLE_RECOVERY_MCUBOOT_NAME}
@@ -1116,7 +1121,7 @@ endif()
 
 # Build binary that writes the recovery image into the SPI flash memory
 set(EXECUTABLE_RECOVERYLOADER_NAME "pinetime-recovery-loader")
-set(EXECUTABLE_RECOVERYLOADER_FILE_NAME ${EXECUTABLE_RECOVERYLOADER_NAME}-${pinetime_VERSION_MAJOR}.${pinetime_VERSION_MINOR}.${pinetime_VERSION_PATCH})
+set(EXECUTABLE_RECOVERYLOADER_FILE_NAME ${EXECUTABLE_RECOVERYLOADER_NAME}-${jwatch_VERSION_MAJOR}.${jwatch_VERSION_MINOR}.${jwatch_VERSION_PATCH})
 add_executable(${EXECUTABLE_RECOVERYLOADER_NAME} ${RECOVERYLOADER_SOURCE_FILES})
 target_link_libraries(${EXECUTABLE_RECOVERYLOADER_NAME} nrf-sdk infinitime_fonts infinitime_apps)
 set_target_properties(${EXECUTABLE_RECOVERYLOADER_NAME} PROPERTIES OUTPUT_NAME ${EXECUTABLE_RECOVERYLOADER_FILE_NAME})
@@ -1135,7 +1140,7 @@ add_dependencies(${EXECUTABLE_RECOVERYLOADER_NAME} ${EXECUTABLE_RECOVERY_MCUBOOT
 
 set_target_properties(${EXECUTABLE_RECOVERYLOADER_NAME} PROPERTIES
         SUFFIX ".out"
-        LINK_FLAGS "-mthumb -mabi=aapcs -L ${NRF5_SDK_PATH}/modules/nrfx/mdk -T${NRF5_LINKER_SCRIPT} -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections -Wl,--print-memory-usage --specs=nano.specs -Wl,-Map=${EXECUTABLE_RECOVERYLOADER_FILE_NAME}.map"
+        LINK_FLAGS "-mthumb -mabi=aapcs -L ${NRF5_SDK_PATH}/modules/nrfx/mdk -T\"${NRF5_LINKER_SCRIPT}\" -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections -Wl,--print-memory-usage --specs=nano.specs -Wl,-Map=${EXECUTABLE_RECOVERYLOADER_FILE_NAME}.map"
         )
 
 add_custom_command(TARGET ${EXECUTABLE_RECOVERYLOADER_NAME}
@@ -1148,10 +1153,10 @@ add_custom_command(TARGET ${EXECUTABLE_RECOVERYLOADER_NAME}
 
 # Build binary that writes the recovery image (MCUBoot version)
 set(EXECUTABLE_MCUBOOT_RECOVERYLOADER_NAME "pinetime-mcuboot-recovery-loader")
-set(EXECUTABLE_MCUBOOT_RECOVERYLOADER_FILE_NAME ${EXECUTABLE_MCUBOOT_RECOVERYLOADER_NAME}-${pinetime_VERSION_MAJOR}.${pinetime_VERSION_MINOR}.${pinetime_VERSION_PATCH})
-set(IMAGE_MCUBOOT_RECOVERYLOADER_FILE_NAME ${EXECUTABLE_MCUBOOT_RECOVERYLOADER_NAME}-image-${pinetime_VERSION_MAJOR}.${pinetime_VERSION_MINOR}.${pinetime_VERSION_PATCH})
+set(EXECUTABLE_MCUBOOT_RECOVERYLOADER_FILE_NAME ${EXECUTABLE_MCUBOOT_RECOVERYLOADER_NAME}-${jwatch_VERSION_MAJOR}.${jwatch_VERSION_MINOR}.${jwatch_VERSION_PATCH})
+set(IMAGE_MCUBOOT_RECOVERYLOADER_FILE_NAME ${EXECUTABLE_MCUBOOT_RECOVERYLOADER_NAME}-image-${jwatch_VERSION_MAJOR}.${jwatch_VERSION_MINOR}.${jwatch_VERSION_PATCH})
 set(IMAGE_MCUBOOT_RECOVERYLOADER_FILE_NAME_HEX ${IMAGE_MCUBOOT_RECOVERYLOADER_FILE_NAME}.hex)
-set(DFU_MCUBOOT_RECOVERYLOADER_FILE_NAME ${EXECUTABLE_MCUBOOT_RECOVERYLOADER_NAME}-dfu-${pinetime_VERSION_MAJOR}.${pinetime_VERSION_MINOR}.${pinetime_VERSION_PATCH}.zip)
+set(DFU_MCUBOOT_RECOVERYLOADER_FILE_NAME ${EXECUTABLE_MCUBOOT_RECOVERYLOADER_NAME}-dfu-${jwatch_VERSION_MAJOR}.${jwatch_VERSION_MINOR}.${jwatch_VERSION_PATCH}.zip)
 add_executable(${EXECUTABLE_MCUBOOT_RECOVERYLOADER_NAME} ${RECOVERYLOADER_SOURCE_FILES})
 target_link_libraries(${EXECUTABLE_MCUBOOT_RECOVERYLOADER_NAME} nrf-sdk infinitime_fonts infinitime_apps)
 set_target_properties(${EXECUTABLE_MCUBOOT_RECOVERYLOADER_NAME} PROPERTIES OUTPUT_NAME ${EXECUTABLE_MCUBOOT_RECOVERYLOADER_FILE_NAME})
@@ -1170,7 +1175,7 @@ add_dependencies(${EXECUTABLE_MCUBOOT_RECOVERYLOADER_NAME} ${EXECUTABLE_RECOVERY
 
 set_target_properties(${EXECUTABLE_MCUBOOT_RECOVERYLOADER_NAME} PROPERTIES
         SUFFIX ".out"
-        LINK_FLAGS "-mthumb -mabi=aapcs -std=gnu++98 -std=c99 -L ${NRF5_SDK_PATH}/modules/nrfx/mdk -T${NRF5_LINKER_SCRIPT_MCUBOOT} -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections -Wl,--print-memory-usage --specs=nano.specs -Wl,-Map=${EXECUTABLE_MCUBOOT_RECOVERYLOADER_FILE_NAME}.map"
+        LINK_FLAGS "-mthumb -mabi=aapcs -std=gnu++98 -std=c99 -L ${NRF5_SDK_PATH}/modules/nrfx/mdk -T\"${NRF5_LINKER_SCRIPT_MCUBOOT}\" -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections -Wl,--print-memory-usage --specs=nano.specs -Wl,-Map=${EXECUTABLE_MCUBOOT_RECOVERYLOADER_FILE_NAME}.map"
         )
 
 add_custom_command(TARGET ${EXECUTABLE_MCUBOOT_RECOVERYLOADER_NAME}

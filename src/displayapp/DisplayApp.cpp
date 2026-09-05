@@ -70,6 +70,7 @@
 #include "displayapp/screens/settings/SettingWatchFaceSimpleStyle.h"
 #include "displayapp/screens/settings/SettingAppMenuStyle.h"
 #include "displayapp/screens/settings/SettingNightstand.h"
+#include "displayapp/screens/settings/SettingWatchName.h"
 #include "displayapp/screens/settings/SettingActivityGoals.h"
 #include "displayapp/screens/settings/SettingWatchFaceColor.h"
 #include "displayapp/screens/settings/SettingButtonRadius.h"
@@ -880,7 +881,8 @@ void DisplayApp::LoadScreen(Apps app, DisplayApp::FullRefreshDirections directio
                                                                motorController,
                                                                settingsController,
                                                                bleController,
-                                                               alarmController);
+                                                               alarmController,
+                                                               systemTask->nimble());
       break;
     case Apps::Settings:
       currentScreen = std::make_unique<Screens::Settings>(this, settingsController);
@@ -947,6 +949,9 @@ void DisplayApp::LoadScreen(Apps app, DisplayApp::FullRefreshDirections directio
       break;
     case Apps::SettingNightstand:
       currentScreen = std::make_unique<Screens::SettingNightstand>(this, settingsController);
+      break;
+    case Apps::SettingWatchName:
+      currentScreen = std::make_unique<Screens::SettingWatchName>(settingsController);
       break;
     case Apps::SettingActivityGoals:
       currentScreen = std::make_unique<Screens::SettingActivityGoals>(this, settingsController);

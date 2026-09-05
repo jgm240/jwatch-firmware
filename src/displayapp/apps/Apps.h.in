@@ -52,6 +52,7 @@ namespace Pinetime {
       SettingWatchFaceSimpleStyle,
       SettingAppMenuStyle,
       SettingNightstand,
+      SettingWatchName,
       Snake,
       BTRemote,
       FileBrowser,

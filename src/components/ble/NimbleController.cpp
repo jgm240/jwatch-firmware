@@ -19,6 +19,7 @@
 #include "components/ble/NotificationManager.h"
 #include "components/datetime/DateTimeController.h"
 #include "components/fs/FS.h"
+#include "components/settings/Settings.h"
 #include "systemtask/SystemTask.h"
 
 using namespace Pinetime::Controllers;
@@ -31,12 +32,14 @@ NimbleController::NimbleController(Pinetime::System::SystemTask& systemTask,
                                    Pinetime::Drivers::SpiNorFlash& spiNorFlash,
                                    HeartRateController& heartRateController,
                                    MotionController& motionController,
-                                   FS& fs)
+                                   FS& fs,
+                                   Settings& settingsController)
   : systemTask {systemTask},
     bleController {bleController},
     dateTimeController {dateTimeController},
     spiNorFlash {spiNorFlash},
     fs {fs},
+    settingsController {settingsController},
     dfuService {systemTask, bleController, spiNorFlash},
 
     currentTimeClient {dateTimeController},
@@ -49,9 +52,13 @@ NimbleController::NimbleController(Pinetime::System::SystemTask& systemTask,
     immediateAlertService {systemTask, notificationManager},
     heartRateService {*this, heartRateController},
     hidService {*this},
+    findMyPhoneService {*this},
+    watchNameService {*this},
     motionService {*this, motionController},
     fsService {systemTask, fs},
     serviceDiscovery({&currentTimeClient, &alertNotificationClient}) {
+  std::strncpy(deviceName, settingsController.GetWatchName(), deviceNameMaxLength);
+  deviceName[deviceNameMaxLength] = '\0';
 }
 
 void nimble_on_reset(int reason) {
@@ -99,6 +106,8 @@ void NimbleController::Init() {
   immediateAlertService.Init();
   heartRateService.Init();
   hidService.Init();
+  findMyPhoneService.Init();
+  watchNameService.Init();
   motionService.Init();
   fsService.Init();
 
@@ -332,14 +341,17 @@ int NimbleController::OnGAPEvent(ble_gap_event* event) {
         heartRateService.UnsubscribeNotification(event->subscribe.attr_handle);
         motionService.UnsubscribeNotification(event->subscribe.attr_handle);
         hidService.UnsubscribeNotification(event->subscribe.attr_handle);
+        findMyPhoneService.UnsubscribeNotification(event->subscribe.attr_handle);
       } else if (event->subscribe.prev_notify == 0 && event->subscribe.cur_notify == 1) {
         heartRateService.SubscribeNotification(event->subscribe.attr_handle);
         motionService.SubscribeNotification(event->subscribe.attr_handle);
         hidService.SubscribeNotification(event->subscribe.attr_handle);
+        findMyPhoneService.SubscribeNotification(event->subscribe.attr_handle);
       } else if (event->subscribe.prev_notify == 1 && event->subscribe.cur_notify == 0) {
         heartRateService.UnsubscribeNotification(event->subscribe.attr_handle);
         motionService.UnsubscribeNotification(event->subscribe.attr_handle);
         hidService.UnsubscribeNotification(event->subscribe.attr_handle);
+        findMyPhoneService.UnsubscribeNotification(event->subscribe.attr_handle);
       }
       break;
 
@@ -410,6 +422,22 @@ void NimbleController::NotifyBatteryLevel(uint8_t level) {
   if (connectionHandle != BLE_HS_CONN_HANDLE_NONE) {
     batteryInformationService.NotifyBatteryLevel(connectionHandle, level);
   }
+}
+
+void NimbleController::SetDeviceName(const char* name) {
+  std::strncpy(deviceName, name, deviceNameMaxLength);
+  deviceName[deviceNameMaxLength] = '\0';
+
+  ble_svc_gap_device_name_set(deviceName);
+  settingsController.SetWatchName(deviceName);
+  settingsController.SaveSettings();
+
+  // Not calling StartAdvertising() here: a GATT write only happens over an active
+  // connection, and advertising is already stopped while connected. OnGAPEvent's
+  // BLE_GAP_EVENT_DISCONNECT handler unconditionally restarts advertising once this
+  // connection ends, which will pick up the buffer we just updated - no need to risk
+  // calling ble_gap_adv_start() while a connection (and possibly its own advertising
+  // for additional centrals) is already active.
 }
 
 void NimbleController::EnableRadio() {

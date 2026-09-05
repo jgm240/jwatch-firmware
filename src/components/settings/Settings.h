@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <cstdint>
+#include <cstring>
 #include <bitset>
 #include <limits>
 #include <optional>
@@ -74,6 +75,11 @@ namespace Pinetime {
           Pinetime::Applications::Widgets::ComplicationType::Date,
         };
       };
+
+      // Bluetooth device name, editable from the phone app (there's no on-watch keyboard).
+      // +1 for the null terminator; kept short enough to leave headroom in the advertising
+      // payload alongside the other advertised fields (service UUIDs, flags, etc).
+      static constexpr size_t watchNameMaxLength = 20;
 
       static constexpr size_t quickActionSlots = 4;
 
@@ -592,6 +598,30 @@ namespace Pinetime {
         return settings.weatherEffectsEnabled;
       };
 
+      void SetWatchName(const char* name) {
+        char truncated[watchNameMaxLength + 1] = {0};
+        std::strncpy(truncated, name, watchNameMaxLength);
+        if (std::strcmp(truncated, settings.watchName.data()) != 0) {
+          settingsChanged = true;
+        }
+        std::strcpy(settings.watchName.data(), truncated);
+      };
+
+      const char* GetWatchName() const {
+        return settings.watchName.data();
+      };
+
+      void SetShowWatchNameOnFace(bool show) {
+        if (show != settings.showWatchNameOnFace) {
+          settingsChanged = true;
+        }
+        settings.showWatchNameOnFace = show;
+      };
+
+      bool GetShowWatchNameOnFace() const {
+        return settings.showWatchNameOnFace;
+      };
+
       static constexpr size_t activityHistoryDays = 6;
 
       struct DailyActivity {
@@ -729,7 +759,7 @@ namespace Pinetime {
     private:
       Pinetime::Controllers::FS& fs;
 
-      static constexpr uint32_t settingsVersion = 0x001A;
+      static constexpr uint32_t settingsVersion = 0x001B;
 
       struct SettingsData {
         uint32_t version = settingsVersion;
@@ -790,6 +820,9 @@ namespace Pinetime {
 
         bool dfuAndFsEnabledOnBoot = false;
         uint16_t heartRateBackgroundPeriod = std::numeric_limits<uint16_t>::max(); // Disabled by default
+
+        std::array<char, watchNameMaxLength + 1> watchName {"JWatch"};
+        bool showWatchNameOnFace = false;
       };
 
       SettingsData settings;
