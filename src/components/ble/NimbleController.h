@@ -90,7 +90,7 @@ namespace Pinetime {
       void PersistBond(struct ble_gap_conn_desc& desc);
       void RestoreBond();
 
-      static constexpr const char* deviceName = "InfiniTime";
+      static constexpr const char* deviceName = "JWatch";
       Pinetime::System::SystemTask& systemTask;
       Ble& bleController;
       DateTime& dateTimeController;

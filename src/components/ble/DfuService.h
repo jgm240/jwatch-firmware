@@ -89,7 +89,7 @@ namespace Pinetime {
       DfuImage dfuImage;
       NotificationManager notificationManager;
 
-      static constexpr const char denyAlert[] = "InfiniTime\0Firmware update attempted, but disabled in settings.";
+      static constexpr const char denyAlert[] = "JWatch\0Firmware update attempted, but disabled in settings.";
       static constexpr const uint8_t denyAlertLength = sizeof(denyAlert); // for this to work denyAlert MUST be array
 
       static constexpr uint16_t dfuServiceId {0x1530};

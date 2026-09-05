@@ -29,7 +29,7 @@ namespace Pinetime {
       Pinetime::System::SystemTask& systemTask;
       Pinetime::Controllers::FS& fs;
 
-      static constexpr const char denyAlert[] = "InfiniTime\0File access attempted, but disabled in settings.";
+      static constexpr const char denyAlert[] = "JWatch\0File access attempted, but disabled in settings.";
       static constexpr const uint8_t denyAlertLength = sizeof(denyAlert); // for this to work denyAlert MUST be array
 
       static constexpr uint16_t FSServiceId {0xFEBB};
