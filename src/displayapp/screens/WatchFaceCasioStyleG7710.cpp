@@ -268,7 +268,10 @@ void WatchFaceCasioStyleG7710::Refresh() {
 
       time_t ttTime =
         std::chrono::system_clock::to_time_t(std::chrono::time_point_cast<std::chrono::system_clock::duration>(currentDateTime.Get()));
-      tm* tmTime = std::localtime(&ttTime);
+      // ToLocalTime() is thread-safe against DateTimeController's own std::localtime() use
+      // (see DateTimeController.h) - a direct std::localtime() call here would race it.
+      std::tm localTm = dateTimeController.ToLocalTime(ttTime);
+      tm* tmTime = &localTm;
 
       // TODO: When we start using C++20, use std::chrono::year::is_leap
       int daysInCurrentYear = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0 ? 366 : 365;

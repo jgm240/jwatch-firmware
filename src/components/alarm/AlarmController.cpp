@@ -69,32 +69,35 @@ void AlarmController::ScheduleAlarm() {
   auto now = dateTimeController.CurrentDateTime();
   alarmTime = now;
   time_t ttAlarmTime = std::chrono::system_clock::to_time_t(std::chrono::time_point_cast<std::chrono::system_clock::duration>(alarmTime));
-  tm* tmAlarmTime = std::localtime(&ttAlarmTime);
+  // ToLocalTime() copies the result out under DateTime's own lock instead of returning a
+  // pointer into libc's shared static buffer (see DateTimeController.h - this build has
+  // configUSE_NEWLIB_REENTRANT=0, so std::localtime() isn't safe to call directly here).
+  std::tm tmAlarmTime = dateTimeController.ToLocalTime(ttAlarmTime);
 
   // If the time being set has already passed today,the alarm should be set for tomorrow
   if (alarm.hours < dateTimeController.Hours() ||
       (alarm.hours == dateTimeController.Hours() && alarm.minutes <= dateTimeController.Minutes())) {
-    tmAlarmTime->tm_mday += 1;
+    tmAlarmTime.tm_mday += 1;
     // tm_wday doesn't update automatically
-    tmAlarmTime->tm_wday = (tmAlarmTime->tm_wday + 1) % 7;
+    tmAlarmTime.tm_wday = (tmAlarmTime.tm_wday + 1) % 7;
   }
 
-  tmAlarmTime->tm_hour = alarm.hours;
-  tmAlarmTime->tm_min = alarm.minutes;
-  tmAlarmTime->tm_sec = 0;
+  tmAlarmTime.tm_hour = alarm.hours;
+  tmAlarmTime.tm_min = alarm.minutes;
+  tmAlarmTime.tm_sec = 0;
 
   // if alarm is in weekday-only mode, make sure it shifts to the next weekday
   if (alarm.recurrence == RecurType::Weekdays) {
-    if (tmAlarmTime->tm_wday == 0) { // Sunday, shift 1 day
-      tmAlarmTime->tm_mday += 1;
-    } else if (tmAlarmTime->tm_wday == 6) { // Saturday, shift 2 days
-      tmAlarmTime->tm_mday += 2;
+    if (tmAlarmTime.tm_wday == 0) { // Sunday, shift 1 day
+      tmAlarmTime.tm_mday += 1;
+    } else if (tmAlarmTime.tm_wday == 6) { // Saturday, shift 2 days
+      tmAlarmTime.tm_mday += 2;
     }
   }
-  tmAlarmTime->tm_isdst = -1; // use system timezone setting to determine DST
+  tmAlarmTime.tm_isdst = -1; // use system timezone setting to determine DST
 
   // now can convert back to a time_point
-  alarmTime = std::chrono::system_clock::from_time_t(std::mktime(tmAlarmTime));
+  alarmTime = std::chrono::system_clock::from_time_t(std::mktime(&tmAlarmTime));
   auto secondsToAlarm = std::chrono::duration_cast<std::chrono::seconds>(alarmTime - now).count();
   xTimerChangePeriod(alarmTimer, secondsToAlarm * configTICK_RATE_HZ, 0);
   xTimerStart(alarmTimer, 0);

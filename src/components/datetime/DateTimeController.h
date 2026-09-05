@@ -128,6 +128,18 @@ namespace Pinetime {
 
       std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> CurrentDateTime();
 
+      // This build has configUSE_NEWLIB_REENTRANT=0, so Newlib's std::localtime() writes
+      // into a single global static buffer shared by every FreeRTOS task, with no locking
+      // of its own. Several callers outside this class (AlarmController, Weather,
+      // WatchFaceCasioStyleG7710) used to call std::localtime() directly, racing against
+      // this class's own internal std::localtime() call (made from a different task) and
+      // occasionally reading back a struct tm that's a torn mix of two unrelated calls'
+      // fields - the likely cause of the date corrupting around events that trigger both a
+      // display refresh and a time-dependent computation close together (e.g. midnight).
+      // This wrapper takes the same mutex UpdateTime() uses and copies the result out
+      // before releasing it, so every caller in the firmware now serializes on one lock.
+      std::tm ToLocalTime(std::time_t tt);
+
       std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> UTCDateTime() {
         return CurrentDateTime() - std::chrono::seconds((tzOffset + dstOffset) * 15 * 60);
       }

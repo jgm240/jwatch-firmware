@@ -78,6 +78,13 @@ std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> Dat
   return currentDateTime;
 }
 
+std::tm DateTime::ToLocalTime(std::time_t tt) {
+  xSemaphoreTake(mutex, portMAX_DELAY);
+  std::tm result = *std::localtime(&tt);
+  xSemaphoreGive(mutex);
+  return result;
+}
+
 void DateTime::UpdateTime(uint32_t systickCounter, bool forceUpdate) {
   // Handle systick counter overflow
   uint32_t systickDelta = 0;

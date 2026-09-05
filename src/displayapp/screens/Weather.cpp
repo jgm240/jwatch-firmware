@@ -24,8 +24,10 @@ namespace {
   }
 }
 
-Weather::Weather(Controllers::Settings& settingsController, Controllers::SimpleWeatherService& weatherService)
-  : settingsController {settingsController}, weatherService {weatherService} {
+Weather::Weather(Controllers::Settings& settingsController,
+                 Controllers::SimpleWeatherService& weatherService,
+                 Controllers::DateTime& dateTimeController)
+  : settingsController {settingsController}, weatherService {weatherService}, dateTimeController {dateTimeController} {
 
   temperature = lv_label_create(lv_scr_act(), nullptr);
   lv_obj_set_style_local_text_color(temperature, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
@@ -137,7 +139,9 @@ void Weather::Refresh() {
   if (currentForecast.IsUpdated()) {
     auto optCurrentForecast = currentForecast.Get();
     if (optCurrentForecast) {
-      std::tm localTime = *std::localtime(reinterpret_cast<const time_t*>(&optCurrentForecast->timestamp));
+      // ToLocalTime() is thread-safe against DateTimeController's own std::localtime() use
+      // (see DateTimeController.h) - a direct std::localtime() call here would race it.
+      std::tm localTime = dateTimeController.ToLocalTime(*reinterpret_cast<const time_t*>(&optCurrentForecast->timestamp));
 
       for (int i = 0; i < optCurrentForecast->nbDays; i++) {
         int16_t maxTemp = optCurrentForecast->days[i]->maxTemperature.Celsius();
