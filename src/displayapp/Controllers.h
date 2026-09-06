@@ -28,6 +28,7 @@ namespace Pinetime {
     class MusicService;
     class NavigationService;
     class HidService;
+    class CalendarEventService;
   }
 
   namespace System {
@@ -57,6 +58,7 @@ namespace Pinetime {
       Pinetime::Controllers::MusicService* musicService;
       Pinetime::Controllers::NavigationService* navigationService;
       Pinetime::Controllers::HidService* hidService;
+      Pinetime::Controllers::CalendarEventService* calendarService;
     };
   }
 }

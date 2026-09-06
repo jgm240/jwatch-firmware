@@ -40,6 +40,7 @@ namespace Pinetime {
     class MusicService;
     class NavigationService;
     class HidService;
+    class CalendarEventService;
   }
 
   namespace System {
@@ -79,6 +80,7 @@ namespace Pinetime {
       void Register(Pinetime::Controllers::MusicService* musicService);
       void Register(Pinetime::Controllers::NavigationService* NavigationService);
       void Register(Pinetime::Controllers::HidService* hidService);
+      void Register(Pinetime::Controllers::CalendarEventService* calendarEventService);
 
     private:
       TaskHandle_t taskHandle;

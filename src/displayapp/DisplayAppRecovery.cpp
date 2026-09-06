@@ -127,3 +127,6 @@ void DisplayApp::Register(Pinetime::Controllers::NavigationService* /*Navigation
 
 void DisplayApp::Register(Pinetime::Controllers::HidService* /*hidService*/) {
 }
+
+void DisplayApp::Register(Pinetime::Controllers::CalendarEventService* /*calendarEventService*/) {
+}

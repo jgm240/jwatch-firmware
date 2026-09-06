@@ -54,6 +54,7 @@ NimbleController::NimbleController(Pinetime::System::SystemTask& systemTask,
     hidService {*this},
     findMyPhoneService {*this},
     watchNameService {*this},
+    calendarEventService {},
     motionService {*this, motionController},
     fsService {systemTask, fs},
     serviceDiscovery({&currentTimeClient, &alertNotificationClient}) {
@@ -108,6 +109,7 @@ void NimbleController::Init() {
   hidService.Init();
   findMyPhoneService.Init();
   watchNameService.Init();
+  calendarEventService.Init();
   motionService.Init();
   fsService.Init();
 

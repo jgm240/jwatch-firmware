@@ -80,6 +80,7 @@
 #include "displayapp/screens/settings/SettingSpiNor.h"
 #include "displayapp/screens/ActivityHistory.h"
 #include "displayapp/screens/WorldClock.h"
+#include "displayapp/screens/Calendar.h"
 #include "displayapp/screens/Mindfulness.h"
 #include "displayapp/screens/ActivityRings.h"
 #include "displayapp/screens/SleepTracking.h"
@@ -1077,6 +1078,10 @@ void DisplayApp::Register(Pinetime::Controllers::NavigationService* NavigationSe
 
 void DisplayApp::Register(Pinetime::Controllers::HidService* hidService) {
   this->controllers.hidService = hidService;
+}
+
+void DisplayApp::Register(Pinetime::Controllers::CalendarEventService* calendarEventService) {
+  this->controllers.calendarService = calendarEventService;
 }
 
 void DisplayApp::ApplyBrightness() {

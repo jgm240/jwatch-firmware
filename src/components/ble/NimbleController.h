@@ -10,6 +10,7 @@
 #include "components/ble/AlertNotificationClient.h"
 #include "components/ble/AlertNotificationService.h"
 #include "components/ble/BatteryInformationService.h"
+#include "components/ble/CalendarEventService.h"
 #include "components/ble/CurrentTimeClient.h"
 #include "components/ble/CurrentTimeService.h"
 #include "components/ble/DeviceInformationService.h"
@@ -84,6 +85,10 @@ namespace Pinetime {
         return findMyPhoneService;
       };
 
+      Pinetime::Controllers::CalendarEventService& calendar() {
+        return calendarEventService;
+      };
+
       uint16_t connHandle();
       void NotifyBatteryLevel(uint8_t level);
 
@@ -128,6 +133,7 @@ namespace Pinetime {
       HidService hidService;
       FindMyPhoneService findMyPhoneService;
       WatchNameService watchNameService;
+      CalendarEventService calendarEventService;
       MotionService motionService;
       FSService fsService;
       ServiceDiscovery serviceDiscovery;

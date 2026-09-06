@@ -83,6 +83,7 @@ namespace Pinetime {
       void Register(Pinetime::Controllers::MusicService* musicService);
       void Register(Pinetime::Controllers::NavigationService* NavigationService);
       void Register(Pinetime::Controllers::HidService* hidService);
+      void Register(Pinetime::Controllers::CalendarEventService* calendarEventService);
 
       // Called by PasscodeLock once the correct code is entered. Until then, GoToRunning
       // reloads PasscodeLock instead of leaving whatever screen was showing when it slept.

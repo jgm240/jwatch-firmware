@@ -57,6 +57,7 @@ namespace Pinetime {
       BTRemote,
       FileBrowser,
       WorldClock,
+      Calendar,
       Mindfulness,
       ActivityRings,
       SleepTracking,
