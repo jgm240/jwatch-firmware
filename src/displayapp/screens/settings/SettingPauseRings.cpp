@@ -17,7 +17,7 @@ namespace {
 SettingPauseRings::SettingPauseRings(Pinetime::Controllers::Settings& settingsController) : settingsController {settingsController} {
 
   lv_obj_t* title = lv_label_create(lv_scr_act(), nullptr);
-  lv_label_set_text_static(title, "Pause rings");
+  lv_label_set_text_static(title, "Pause hexagons");
   lv_label_set_align(title, LV_LABEL_ALIGN_CENTER);
   lv_obj_align(title, lv_scr_act(), LV_ALIGN_IN_TOP_MID, 15, 15);
 
@@ -78,7 +78,7 @@ void SettingPauseRings::Redraw() {
   lv_obj_realign(daysValue);
 
   if (days > 0) {
-    lv_label_set_text_static(statusLabel, "Rings paused");
+    lv_label_set_text_static(statusLabel, "Hexagons paused");
   } else {
     lv_label_set_text_static(statusLabel, "Not paused");
   }

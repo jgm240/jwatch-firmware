@@ -17,7 +17,7 @@ RingsClosed::RingsClosed(DisplayApp* app, Controllers::MotorController& motorCon
   : app {app} {
 
   lv_obj_t* label = lv_label_create(lv_scr_act(), nullptr);
-  lv_label_set_text_static(label, "Rings closed!\nWell done");
+  lv_label_set_text_static(label, "Hexagons closed!\nWell done");
   lv_label_set_align(label, LV_LABEL_ALIGN_CENTER);
   lv_obj_align(label, lv_scr_act(), LV_ALIGN_CENTER, 0, 0);
 

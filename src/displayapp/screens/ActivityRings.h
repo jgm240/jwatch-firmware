@@ -6,6 +6,7 @@
 #include "displayapp/Controllers.h"
 #include "components/health/HealthController.h"
 #include "components/settings/Settings.h"
+#include "displayapp/widgets/HexagonGauge.h"
 #include "Symbols.h"
 
 namespace Pinetime {
@@ -27,9 +28,9 @@ namespace Pinetime {
         Controllers::HealthController& healthController;
         Controllers::Settings& settingsController;
 
-        lv_obj_t* moveArc;
-        lv_obj_t* exerciseArc;
-        lv_obj_t* standArc;
+        Widgets::HexagonGauge moveGauge;
+        Widgets::HexagonGauge exerciseGauge;
+        Widgets::HexagonGauge standGauge;
         lv_obj_t* label;
         lv_obj_t* streakLabel;
         lv_obj_t* hintLabel;

@@ -7,37 +7,21 @@
 using namespace Pinetime::Applications::Screens;
 
 namespace {
-  lv_obj_t* CreateRing(lv_coord_t size, lv_color_t color) {
-    lv_obj_t* arc = lv_arc_create(lv_scr_act(), nullptr);
-    lv_arc_set_bg_angles(arc, 0, 360);
-    lv_arc_set_rotation(arc, 270);
-    lv_arc_set_range(arc, 0, 100);
-    lv_arc_set_value(arc, 0);
-    lv_arc_set_adjustable(arc, false);
-    lv_obj_set_size(arc, size, size);
-    lv_obj_align(arc, lv_scr_act(), LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_style_local_line_color(arc, LV_ARC_PART_INDIC, LV_STATE_DEFAULT, color);
-    lv_obj_set_style_local_line_width(arc, LV_ARC_PART_INDIC, LV_STATE_DEFAULT, 12);
-    lv_obj_set_style_local_line_width(arc, LV_ARC_PART_BG, LV_STATE_DEFAULT, 12);
-    lv_obj_set_style_local_line_opa(arc, LV_ARC_PART_BG, LV_STATE_DEFAULT, LV_OPA_20);
-    return arc;
-  }
-
-  int16_t Percent(uint32_t value, uint32_t goal) {
+  uint8_t Percent(uint32_t value, uint32_t goal) {
     if (goal == 0) {
       return 0;
     }
     uint32_t percent = (value * 100) / goal;
-    return static_cast<int16_t>(std::min<uint32_t>(percent, 100));
+    return static_cast<uint8_t>(std::min<uint32_t>(percent, 100));
   }
 }
 
 ActivityRings::ActivityRings(DisplayApp* app, Controllers::HealthController& healthController, Controllers::Settings& settingsController)
   : app {app}, healthController {healthController}, settingsController {settingsController} {
 
-  moveArc = CreateRing(220, Colors::deepOrange);
-  exerciseArc = CreateRing(170, Colors::green);
-  standArc = CreateRing(120, Colors::blue);
+  moveGauge.Create(lv_scr_act(), 112, 10, Colors::deepOrange);
+  exerciseGauge.Create(lv_scr_act(), 87, 10, Colors::green);
+  standGauge.Create(lv_scr_act(), 62, 10, Colors::blue);
 
   label = lv_label_create(lv_scr_act(), nullptr);
   lv_obj_align(label, lv_scr_act(), LV_ALIGN_CENTER, 0, 0);
@@ -76,9 +60,9 @@ void ActivityRings::Refresh() {
   uint32_t exerciseGoalMinutes = settingsController.GetExerciseGoalMinutes();
   uint32_t standGoalHours = settingsController.GetStandGoalHours();
 
-  lv_arc_set_value(moveArc, Percent(calories, caloriesGoal));
-  lv_arc_set_value(exerciseArc, Percent(activeMinutes, exerciseGoalMinutes));
-  lv_arc_set_value(standArc, Percent(standHours, standGoalHours));
+  moveGauge.SetValue(Percent(calories, caloriesGoal));
+  exerciseGauge.SetValue(Percent(activeMinutes, exerciseGoalMinutes));
+  standGauge.SetValue(Percent(standHours, standGoalHours));
 
   lv_label_set_text_fmt(
     label, "%lucal/%lu\n%lu/%lum\n%lu/%luh", calories, caloriesGoal, activeMinutes, exerciseGoalMinutes, standHours, standGoalHours);

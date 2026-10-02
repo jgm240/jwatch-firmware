@@ -10,7 +10,7 @@ namespace Pinetime {
   namespace Applications {
     namespace Screens {
 
-      // Apple Watch-style "Pause Rings": stepping the value up and it takes effect
+      // "Pause hexagons": stepping the value up and it takes effect
       // immediately (same live-apply convention as every other stepper in this codebase -
       // SettingSteps, SettingTiltParallax, etc.). 0 = not paused / resumed.
       class SettingPauseRings : public Screen {

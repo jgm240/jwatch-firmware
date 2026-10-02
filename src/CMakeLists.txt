@@ -391,6 +391,7 @@ list(APPEND SOURCE_FILES
         displayapp/screens/AppList.cpp
         displayapp/screens/WorldClock.cpp
         displayapp/screens/Calendar.cpp
+        displayapp/widgets/HexagonGauge.cpp
         displayapp/screens/Mindfulness.cpp
         displayapp/screens/ActivityRings.cpp
         displayapp/screens/ActivityHistory.cpp

@@ -568,7 +568,7 @@ namespace Pinetime {
         settings.streakLastDayNumber = dayNumber;
       };
 
-      // Apple Watch-style "Pause Rings": while > 0, HealthController skips ring-closed
+      // "Pause hexagons": while > 0, HealthController skips ring-closed
       // detection/celebration and streak breaking for each day, decrementing by 1 per day.
       void SetPausedDaysRemaining(uint32_t days) {
         if (days > 90) {

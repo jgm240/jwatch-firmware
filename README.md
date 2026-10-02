@@ -6,7 +6,7 @@ A firmware based on InfiniTime v1.16.0 that turns the PineTime into the best fit
 
 OpenHaystack support
 
-Fitness rings (like Apple Watch)
+Fitness hexagons (Move/Exercise/Stand goals)
 
 Nightstand mode (like Standby on Apple Watch)
 

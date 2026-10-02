@@ -127,8 +127,7 @@ void HealthController::UpdateStreak(bool ringsClosedYesterday) {
 }
 
 void HealthController::CheckRingsClosed() {
-  // Paused rings never celebrate or count toward the streak, matching Apple Watch's
-  // Pause Rings behavior - activity is still tracked (for the history graphs), it's just
+  // Paused hexagons never celebrate or count toward the streak - activity is still tracked (for the history graphs), it's just
   // not judged against goals while paused.
   if (ringsClosedToday || settingsController.GetPausedDaysRemaining() > 0) {
     return;

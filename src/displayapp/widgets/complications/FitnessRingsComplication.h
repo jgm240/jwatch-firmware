@@ -4,12 +4,13 @@
 #include "displayapp/widgets/complications/Complication.h"
 #include "components/health/HealthController.h"
 #include "components/settings/Settings.h"
+#include "displayapp/widgets/HexagonGauge.h"
 
 namespace Pinetime {
   namespace Applications {
     namespace Widgets {
 
-      // Miniature version of ActivityRings (Move/Exercise/Stand), same 3-arc idea scaled
+      // Miniature version of ActivityRings (Move/Exercise/Stand), same 3-hexagon idea scaled
       // down to fit a modular watchface slot.
       class FitnessRingsComplication : public Complication {
       public:
@@ -23,9 +24,9 @@ namespace Pinetime {
         const Controllers::Settings& settingsController;
 
         lv_obj_t* container = nullptr;
-        lv_obj_t* moveArc = nullptr;
-        lv_obj_t* exerciseArc = nullptr;
-        lv_obj_t* standArc = nullptr;
+        HexagonGauge moveGauge;
+        HexagonGauge exerciseGauge;
+        HexagonGauge standGauge;
       };
     }
   }

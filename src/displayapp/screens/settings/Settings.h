@@ -69,7 +69,7 @@ namespace Pinetime {
 
           {Symbols::tachometer, "Tilt parallax", Apps::SettingTiltParallax},
           {Symbols::check, "Passcode lock", Apps::SettingPasscode},
-          {Symbols::sleep, "Pause rings", Apps::SettingPauseRings},
+          {Symbols::sleep, "Pause hexagons", Apps::SettingPauseRings},
           {Symbols::list, "SPI-NOR", Apps::SettingSpiNor},
         }};
         ScreenList<nScreens> screens;
