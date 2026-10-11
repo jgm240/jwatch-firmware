@@ -431,8 +431,10 @@ void NimbleController::SetDeviceName(const char* name) {
   deviceName[deviceNameMaxLength] = '\0';
 
   ble_svc_gap_device_name_set(deviceName);
+  // No SaveSettings() here: this runs on the BLE host thread and a phone can write the name
+  // while the watch is asleep with its SPI-NOR flash powered down, where a flash write never
+  // completes. SetWatchName() marks settings changed; the save timer / GoToSleep() flush it.
   settingsController.SetWatchName(deviceName);
-  settingsController.SaveSettings();
 
   // Not calling StartAdvertising() here: a GATT write only happens over an active
   // connection, and advertising is already stopped while connected. OnGAPEvent's

@@ -349,6 +349,13 @@ void SystemTask::Work() {
           motionSensor.ResetStepCounter();
           motionController.AdvanceDay();
           healthController.OnNewDay();
+          // Flush the streak/history rollover now, but only while awake: asleep, the SPI-NOR
+          // flash is in deep power-down and a write to it hangs this task until the watchdog
+          // resets the watch (clock back to 1 Jan). The changed flag stays set, so the save
+          // timer / GoToSleep() writes it as soon as the watch is awake again.
+          if (!IsSleeping()) {
+            settingsController.SaveSettings();
+          }
           break;
         case Messages::OnNewHour:
           using Pinetime::Controllers::AlarmController;

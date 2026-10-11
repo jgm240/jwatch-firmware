@@ -100,9 +100,12 @@ void HealthController::OnNewDay() {
   lastNightDeepHalfHours = deepHalfHoursTonight;
   deepHalfHoursTonight = 0;
 
-  // Flush immediately rather than waiting for a settings screen to close - streak/history
-  // are only meaningful if they survive a reboot between now and whenever that next happens.
-  settingsController.SaveSettings();
+  // Deliberately not saving here. This runs from SystemTask at midnight, when the watch is
+  // almost always asleep and the SPI-NOR flash is in deep power-down - a flash write then
+  // never completes (SpiNorFlash waits on a status bit that never comes), SystemTask stops
+  // feeding the watchdog, and the watch reboots with its clock reset to 1 Jan. The changed
+  // flag is already set by the setters above; SystemTask flushes it right after this
+  // returns if the watch is awake, and otherwise the next save-timer tick / GoToSleep does.
 }
 
 void HealthController::UpdateStreak(bool ringsClosedYesterday) {
