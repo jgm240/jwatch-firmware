@@ -9,6 +9,7 @@
 #include "displayapp/widgets/complications/NowPlayingComplication.h"
 #include "displayapp/widgets/complications/CubeComplication.h"
 #include "displayapp/widgets/complications/FitnessRingsComplication.h"
+#include "displayapp/widgets/complications/NextEventComplication.h"
 
 using namespace Pinetime::Applications::Widgets;
 
@@ -34,6 +35,8 @@ std::unique_ptr<Complication> Pinetime::Applications::Widgets::CreateComplicatio
       return std::make_unique<CubeComplication>(controllers.motionController);
     case ComplicationType::FitnessRings:
       return std::make_unique<FitnessRingsComplication>(controllers.healthController, controllers.settingsController);
+    case ComplicationType::NextEvent:
+      return std::make_unique<NextEventComplication>(*controllers.calendarService, controllers.dateTimeController);
     case ComplicationType::None:
     default:
       return nullptr;

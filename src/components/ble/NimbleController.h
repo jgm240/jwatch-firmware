@@ -18,6 +18,7 @@
 #include "components/ble/FindMyPhoneService.h"
 #include "components/ble/FSService.h"
 #include "components/ble/HeartRateService.h"
+#include "components/ble/HealthSyncService.h"
 #include "components/ble/HidService.h"
 #include "components/ble/ImmediateAlertService.h"
 #include "components/ble/MusicService.h"
@@ -40,6 +41,7 @@ namespace Pinetime {
   namespace Controllers {
     class Ble;
     class DateTime;
+    class HealthController;
     class NotificationManager;
     class Settings;
 
@@ -55,7 +57,8 @@ namespace Pinetime {
                        HeartRateController& heartRateController,
                        MotionController& motionController,
                        FS& fs,
-                       Settings& settingsController);
+                       Settings& settingsController,
+                       HealthController& healthController);
       void Init();
       void StartAdvertising();
       int OnGAPEvent(ble_gap_event* event);
@@ -134,6 +137,7 @@ namespace Pinetime {
       FindMyPhoneService findMyPhoneService;
       WatchNameService watchNameService;
       CalendarEventService calendarEventService;
+      HealthSyncService healthSyncService;
       MotionService motionService;
       FSService fsService;
       ServiceDiscovery serviceDiscovery;

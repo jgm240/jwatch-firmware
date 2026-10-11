@@ -81,6 +81,8 @@
 #include "displayapp/screens/ActivityHistory.h"
 #include "displayapp/screens/WorldClock.h"
 #include "displayapp/screens/Calendar.h"
+#include "displayapp/screens/Camera.h"
+#include "displayapp/screens/settings/SettingAssist.h"
 #include "displayapp/screens/Mindfulness.h"
 #include "displayapp/screens/ActivityRings.h"
 #include "displayapp/screens/SleepTracking.h"
@@ -94,6 +96,13 @@
 #include <limits>
 
 using namespace Pinetime::Applications;
+
+namespace {
+  // Turn-by-turn haptics: left = two short pulses, right = one long, arrive = short-short-long.
+  constexpr Pinetime::Controllers::PatternData navLeftPattern = {2, {70, 70}, {110, 0}};
+  constexpr Pinetime::Controllers::PatternData navRightPattern = {1, {350}, {0}};
+  constexpr Pinetime::Controllers::PatternData navArrivePattern = {3, {50, 50, 220}, {80, 80, 0}};
+}
 using namespace Pinetime::Applications::Display;
 
 namespace {
@@ -662,6 +671,26 @@ void DisplayApp::Refresh() {
         LoadNewScreen(Apps::Clock, DisplayApp::FullRefreshDirections::None);
         motorController.RunForDuration(35);
         break;
+      case Messages::HapticNavLeft:
+        motorController.RunPattern(navLeftPattern);
+        break;
+      case Messages::HapticNavRight:
+        motorController.RunPattern(navRightPattern);
+        break;
+      case Messages::HapticNavArrive:
+        motorController.RunPattern(navArrivePattern);
+        break;
+      case Messages::StandNudge:
+        motorController.RunPattern(Controllers::VibrationPatterns::Triple);
+        break;
+      case Messages::ShakeSilence:
+        if (currentApp == Apps::Alarm && alarmController.IsAlerting()) {
+          currentScreen->OnButtonPushed();
+        } else if (motorController.IsRinging() && systemTask != nullptr) {
+          motorController.StopRinging();
+          systemTask->nimble().alertService().MuteIncomingCall();
+        }
+        break;
     }
   }
 
@@ -902,6 +931,9 @@ void DisplayApp::LoadScreen(Apps app, DisplayApp::FullRefreshDirections directio
       break;
     case Apps::SettingWeatherFormat:
       currentScreen = std::make_unique<Screens::SettingWeatherFormat>(settingsController);
+      break;
+    case Apps::SettingAssist:
+      currentScreen = std::make_unique<Screens::SettingAssist>(settingsController);
       break;
     case Apps::SettingWakeUp:
       currentScreen = std::make_unique<Screens::SettingWakeUp>(settingsController);

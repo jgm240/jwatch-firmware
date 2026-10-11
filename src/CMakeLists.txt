@@ -391,6 +391,9 @@ list(APPEND SOURCE_FILES
         displayapp/screens/AppList.cpp
         displayapp/screens/WorldClock.cpp
         displayapp/screens/Calendar.cpp
+        displayapp/screens/Camera.cpp
+        displayapp/screens/settings/SettingAssist.cpp
+        displayapp/widgets/complications/NextEventComplication.cpp
         displayapp/widgets/HexagonGauge.cpp
         displayapp/screens/Mindfulness.cpp
         displayapp/screens/ActivityRings.cpp
@@ -519,6 +522,7 @@ list(APPEND SOURCE_FILES
         components/ble/FindMyPhoneService.cpp
         components/ble/WatchNameService.cpp
         components/ble/CalendarEventService.cpp
+        components/ble/HealthSyncService.cpp
         components/ble/MotionService.cpp
         components/firmwarevalidator/FirmwareValidator.cpp
         components/motor/MotorController.cpp
@@ -596,6 +600,7 @@ list(APPEND RECOVERY_SOURCE_FILES
         components/ble/FindMyPhoneService.cpp
         components/ble/WatchNameService.cpp
         components/ble/CalendarEventService.cpp
+        components/ble/HealthSyncService.cpp
         components/ble/MotionService.cpp
         components/firmwarevalidator/FirmwareValidator.cpp
         components/settings/Settings.cpp

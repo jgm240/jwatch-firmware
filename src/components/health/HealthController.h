@@ -35,6 +35,16 @@ namespace Pinetime {
         return standHoursToday;
       }
 
+      uint8_t GetBedtimeEndHour() const;
+
+      // True at most once per half hour: awake hours, no real movement in the first half of this
+      // hour, and the day's stand goal not reached yet. Clears itself on read.
+      bool ConsumeStandNudge() {
+        bool result = standNudgePending;
+        standNudgePending = false;
+        return result;
+      }
+
       uint32_t GetLastNightStillHalfHours() const {
         return lastNightStillHalfHours;
       }
@@ -83,6 +93,8 @@ namespace Pinetime {
 
       bool ringsClosedToday = false;
       bool ringsJustClosed = false;
+      bool standNudgePending = false;
+      bool wasInSleepWindow = false;
 
       static uint32_t CurrentDayNumber(DateTime& dateTimeController);
 

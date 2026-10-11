@@ -38,6 +38,8 @@ namespace Pinetime {
       void ScheduleAlarm();
       void DisableAlarm();
       void SetOffAlarmNow();
+      // Smart alarm: fire now instead of at the scheduled time (cancels the pending timer).
+      void TriggerEarly();
       uint32_t SecondsToAlarm() const;
       void StopAlerting();
       enum class RecurType { None, Daily, Weekdays };

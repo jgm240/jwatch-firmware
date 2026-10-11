@@ -65,7 +65,7 @@ void Calendar::Refresh() {
     }
 
     const auto& event = calendarEventService.GetEvent(i);
-    std::tm eventTime = dateTimeController.ToLocalTime(static_cast<std::time_t>(event.start));
+    std::tm eventTime = dateTimeController.ToLocalTime(dateTimeController.UtcEpochToLocalEpoch(event.start));
     lv_label_set_text_fmt(timeLabels[i], "%02d:%02d", eventTime.tm_hour, eventTime.tm_min);
     lv_label_set_text_fmt(titleLabels[i], "%s", event.title.data());
   }

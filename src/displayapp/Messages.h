@@ -28,6 +28,11 @@ namespace Pinetime {
         GoToNightstand,
         UpdateNightMode,
         RingsClosed,
+        HapticNavLeft,
+        HapticNavRight,
+        HapticNavArrive,
+        StandNudge,
+        ShakeSilence,
       };
     }
   }

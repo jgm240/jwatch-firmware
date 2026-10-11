@@ -45,6 +45,13 @@ namespace Pinetime {
 
       int getProgress();
 
+      // 0 none, 1 left, 2 right, 3 arrive. Set when the phone sends a new maneuver flag; clears on read.
+      uint8_t ConsumeTurn() {
+        uint8_t turn = pendingTurn;
+        pendingTurn = 0;
+        return turn;
+      }
+
     private:
       struct ble_gatt_chr_def characteristicDefinition[5];
       struct ble_gatt_svc_def serviceDefinition[2];
@@ -53,6 +60,7 @@ namespace Pinetime {
       std::string m_narrative;
       std::string m_manDist;
       int m_progress;
+      uint8_t pendingTurn = 0;
     };
   }
 }

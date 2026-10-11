@@ -18,7 +18,8 @@ namespace Pinetime {
         Alarm,
         NowPlaying,
         Cube,
-        FitnessRings
+        FitnessRings,
+        NextEvent
       };
 
       class Complication {

@@ -88,7 +88,17 @@ int Pinetime::Controllers::NavigationService::OnCommand(struct ble_gatt_access_c
     os_mbuf_copydata(ctxt->om, 0, notifSize, data);
     char* s = (char*) &data[0];
     if (ble_uuid_cmp(ctxt->chr->uuid, &navFlagCharUuid.u) == 0) {
-      m_flag = s;
+      std::string newFlag = s;
+      if (newFlag != m_flag) {
+        if (newFlag.find("arrive") != std::string::npos) {
+          pendingTurn = 3;
+        } else if (newFlag.find("left") != std::string::npos) {
+          pendingTurn = 1;
+        } else if (newFlag.find("right") != std::string::npos) {
+          pendingTurn = 2;
+        }
+      }
+      m_flag = newFlag;
     } else if (ble_uuid_cmp(ctxt->chr->uuid, &navNarrativeCharUuid.u) == 0) {
       m_narrative = s;
     } else if (ble_uuid_cmp(ctxt->chr->uuid, &navManDistCharUuid.u) == 0) {

@@ -90,7 +90,8 @@ SystemTask::SystemTask(Drivers::SpiMaster& spi,
                      heartRateController,
                      motionController,
                      fs,
-                     settingsController) {
+                     settingsController,
+                     healthController) {
 }
 
 void SystemTask::Start() {
@@ -236,7 +237,14 @@ void SystemTask::Work() {
             alarmController.ScheduleAlarm();
           }
           break;
-        case Messages::OnNewNotification:
+        case Messages::OnNewNotification: {
+          // A ringing call can be silenced by shaking the watch for the next minute.
+          const auto lastNotification = notificationManager.GetLastNotification();
+          if (lastNotification.valid &&
+              lastNotification.category == Pinetime::Controllers::NotificationManager::Categories::IncomingCall) {
+            callShakeWindowEnd = xTaskGetTickCount() + pdMS_TO_TICKS(60 * 1000);
+          }
+        }
           if (settingsController.GetNotificationStatus() == Pinetime::Controllers::Settings::Notification::On) {
             if (IsSleeping()) {
               GoToRunning();
@@ -375,6 +383,19 @@ void SystemTask::Work() {
         case Messages::OnNewHalfHour:
           using Pinetime::Controllers::AlarmController;
           healthController.OnHalfHourTick();
+          if (healthController.ConsumeStandNudge() && settingsController.GetStandReminders() &&
+              settingsController.GetNotificationStatus() != Controllers::Settings::Notification::Sleep) {
+            Pinetime::Controllers::NotificationManager::Notification nudge;
+            static constexpr char nudgeText[] = "Stand up\0Time to move around\0";
+            std::memcpy(nudge.message.data(), nudgeText, sizeof(nudgeText));
+            nudge.size = sizeof(nudgeText);
+            nudge.category = Pinetime::Controllers::NotificationManager::Categories::SimpleAlert;
+            notificationManager.Push(std::move(nudge));
+            if (settingsController.GetNotificationStatus() == Controllers::Settings::Notification::On) {
+              GoToRunning();
+              displayApp.PushMessage(Pinetime::Applications::Display::Messages::NewNotification);
+            }
+          }
           displayApp.PushMessage(Pinetime::Applications::Display::Messages::UpdateNightMode);
           if (healthController.ConsumeRingsJustClosed() &&
               settingsController.GetNotificationStatus() != Controllers::Settings::Notification::Sleep) {
@@ -428,6 +449,7 @@ void SystemTask::Work() {
     elapsed = xTaskGetTickCount() - lastStateUpdate;
     if (elapsed >= stateUpdatePeriod) {
       UpdateMotion();
+      HandleAssists();
       if (isBleDiscoveryTimerRunning) {
         if (bleDiscoveryTimer == 0) {
           isBleDiscoveryTimerRunning = false;
@@ -499,6 +521,39 @@ void SystemTask::GoToSleep() {
 
   state = SystemTaskState::GoingToSleep;
 };
+
+void SystemTask::HandleAssists() {
+  using DisplayMessages = Pinetime::Applications::Display::Messages;
+  const TickType_t now = xTaskGetTickCount();
+
+  // Turn-by-turn haptics. Always drain the pending turn so a stale one can't fire much later.
+  const uint8_t turn = nimbleController.navigation().ConsumeTurn();
+  if (turn != 0 && settingsController.GetHapticNavigation()) {
+    displayApp.PushMessage(turn == 1 ? DisplayMessages::HapticNavLeft
+                                     : (turn == 2 ? DisplayMessages::HapticNavRight : DisplayMessages::HapticNavArrive));
+  }
+
+  const int32_t shakeSpeed = motionController.CurrentShakeSpeed();
+
+  // Smart alarm: inside the last 20 minutes before the alarm, wake at the first stirring
+  // (the same "not still" threshold the sleep tracker uses for light sleep).
+  if (settingsController.GetSmartAlarmEnabled() && alarmController.IsEnabled() && !alarmController.IsAlerting()) {
+    constexpr uint32_t smartAlarmWindowSeconds = 20 * 60;
+    constexpr int32_t stirThreshold = 30;
+    const uint32_t secondsToAlarm = alarmController.SecondsToAlarm();
+    if (secondsToAlarm > 0 && secondsToAlarm <= smartAlarmWindowSeconds && shakeSpeed >= stirThreshold) {
+      alarmController.TriggerEarly();
+    }
+  }
+
+  // Shake to silence a ringing alarm or incoming call. DisplayApp decides what (if anything)
+  // is actually ringing; this just rate-limits and only fires when one plausibly is.
+  if (settingsController.GetShakeToSilence() && (alarmController.IsAlerting() || now < callShakeWindowEnd) &&
+      shakeSpeed > settingsController.GetShakeThreshold() && (now - lastShakeSilenceTick) > pdMS_TO_TICKS(1500)) {
+    lastShakeSilenceTick = now;
+    displayApp.PushMessage(DisplayMessages::ShakeSilence);
+  }
+}
 
 void SystemTask::UpdateMotion() {
   // Unconditionally update motion

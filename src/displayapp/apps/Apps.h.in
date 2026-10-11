@@ -58,6 +58,8 @@ namespace Pinetime {
       FileBrowser,
       WorldClock,
       Calendar,
+      Camera,
+      SettingAssist,
       Mindfulness,
       ActivityRings,
       SleepTracking,

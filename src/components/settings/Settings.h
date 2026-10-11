@@ -622,6 +622,50 @@ namespace Pinetime {
         return settings.showWatchNameOnFace;
       };
 
+      void SetSmartAlarmEnabled(bool enabled) {
+        if (enabled != settings.smartAlarmEnabled) {
+          settingsChanged = true;
+        }
+        settings.smartAlarmEnabled = enabled;
+      };
+
+      bool GetSmartAlarmEnabled() const {
+        return settings.smartAlarmEnabled;
+      };
+
+      void SetStandReminders(bool enabled) {
+        if (enabled != settings.standReminders) {
+          settingsChanged = true;
+        }
+        settings.standReminders = enabled;
+      };
+
+      bool GetStandReminders() const {
+        return settings.standReminders;
+      };
+
+      void SetHapticNavigation(bool enabled) {
+        if (enabled != settings.hapticNavigation) {
+          settingsChanged = true;
+        }
+        settings.hapticNavigation = enabled;
+      };
+
+      bool GetHapticNavigation() const {
+        return settings.hapticNavigation;
+      };
+
+      void SetShakeToSilence(bool enabled) {
+        if (enabled != settings.shakeToSilence) {
+          settingsChanged = true;
+        }
+        settings.shakeToSilence = enabled;
+      };
+
+      bool GetShakeToSilence() const {
+        return settings.shakeToSilence;
+      };
+
       static constexpr size_t activityHistoryDays = 6;
 
       struct DailyActivity {
@@ -759,7 +803,10 @@ namespace Pinetime {
     private:
       Pinetime::Controllers::FS& fs;
 
-      static constexpr uint32_t settingsVersion = 0x001B;
+      static constexpr uint32_t settingsVersion = 0x001C;
+      // Files from this version are a strict prefix of the current layout (fields are only ever
+      // appended), so they load fine and just keep the defaults for the new trailing fields.
+      static constexpr uint32_t settingsVersionPrefixCompatible = 0x001B;
 
       struct SettingsData {
         uint32_t version = settingsVersion;
@@ -823,6 +870,10 @@ namespace Pinetime {
 
         std::array<char, watchNameMaxLength + 1> watchName {"JWatch"};
         bool showWatchNameOnFace = false;
+        bool smartAlarmEnabled = false;
+        bool standReminders = false;
+        bool hapticNavigation = true;
+        bool shakeToSilence = true;
       };
 
       SettingsData settings;

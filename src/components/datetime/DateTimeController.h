@@ -94,6 +94,13 @@ namespace Pinetime {
         return tzOffset + dstOffset;
       }
 
+      // Phone-supplied timestamps (calendar events) are real UTC epochs, but this class keeps
+      // *wall-clock* time encoded as an epoch (see CurrentDateTime()). Convert with this before
+      // comparing against CurrentDateTime() or formatting with ToLocalTime().
+      std::time_t UtcEpochToLocalEpoch(uint64_t utcEpoch) const {
+        return static_cast<std::time_t>(utcEpoch) + static_cast<std::time_t>(UtcOffset()) * 15 * 60;
+      }
+
       /*
        * returns the offset between the (dst independent) local time zone and UTC
        * in quarters of an hour

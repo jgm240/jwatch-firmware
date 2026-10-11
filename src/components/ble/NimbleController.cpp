@@ -1,4 +1,5 @@
 #include "components/ble/NimbleController.h"
+#include "components/health/HealthController.h"
 #include <array>
 #include <cstring>
 
@@ -33,7 +34,8 @@ NimbleController::NimbleController(Pinetime::System::SystemTask& systemTask,
                                    HeartRateController& heartRateController,
                                    MotionController& motionController,
                                    FS& fs,
-                                   Settings& settingsController)
+                                   Settings& settingsController,
+                                   HealthController& healthController)
   : systemTask {systemTask},
     bleController {bleController},
     dateTimeController {dateTimeController},
@@ -55,6 +57,7 @@ NimbleController::NimbleController(Pinetime::System::SystemTask& systemTask,
     findMyPhoneService {*this},
     watchNameService {*this},
     calendarEventService {},
+    healthSyncService {healthController},
     motionService {*this, motionController},
     fsService {systemTask, fs},
     serviceDiscovery({&currentTimeClient, &alertNotificationClient}) {
@@ -110,6 +113,7 @@ void NimbleController::Init() {
   findMyPhoneService.Init();
   watchNameService.Init();
   calendarEventService.Init();
+  healthSyncService.Init();
   motionService.Init();
   fsService.Init();
 

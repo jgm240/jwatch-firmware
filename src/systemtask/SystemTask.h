@@ -146,6 +146,9 @@ namespace Pinetime {
       void GoToRunning();
       void GoToSleep();
       void UpdateMotion();
+      void HandleAssists();
+      TickType_t callShakeWindowEnd = 0;
+      TickType_t lastShakeSilenceTick = 0;
       static constexpr TickType_t batteryMeasurementPeriod = pdMS_TO_TICKS(10 * 60 * 1000);
       // Bounds how much a settings change can lose to a crash/watchdog reset or dead
       // battery - Settings::SaveSettings() only actually touches flash when a value has

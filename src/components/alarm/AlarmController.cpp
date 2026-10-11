@@ -125,6 +125,11 @@ void AlarmController::SetOffAlarmNow() {
   systemTask->PushMessage(System::Messages::SetOffAlarm);
 }
 
+void AlarmController::TriggerEarly() {
+  xTimerStop(alarmTimer, 0);
+  SetOffAlarmNow();
+}
+
 void AlarmController::StopAlerting() {
   isAlerting = false;
   // Disable alarm unless it is recurring

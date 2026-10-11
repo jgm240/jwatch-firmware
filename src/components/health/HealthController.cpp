@@ -47,7 +47,19 @@ void HealthController::OnHalfHourTick() {
     movedThisHour = true;
   }
 
-  if (IsWithinSleepWindow()) {
+  const bool inSleepWindow = IsWithinSleepWindow();
+  if (wasInSleepWindow && !inSleepWindow) {
+    // The window just closed: that was one whole night - publish it and start the next.
+    lastNightStillHalfHours = stillHalfHoursTonight;
+    lastNightLightHalfHours = lightHalfHoursTonight;
+    lastNightDeepHalfHours = deepHalfHoursTonight;
+    stillHalfHoursTonight = 0;
+    lightHalfHoursTonight = 0;
+    deepHalfHoursTonight = 0;
+  }
+  wasInSleepWindow = inSleepWindow;
+
+  if (inSleepWindow) {
     int32_t shakeSpeed = motionController.CurrentShakeSpeed();
     if (shakeSpeed < deepStillShakeSpeedThreshold) {
       stillHalfHoursTonight++;
@@ -58,7 +70,17 @@ void HealthController::OnHalfHourTick() {
     }
   }
 
+  // The :30 tick is the only one where "haven't moved yet this hour" is a meaningful nudge.
+  if (dateTimeController.Minutes() == 30 && !movedThisHour && !IsWithinSleepWindow() &&
+      standHoursToday < settingsController.GetStandGoalHours()) {
+    standNudgePending = true;
+  }
+
   CheckRingsClosed();
+}
+
+uint8_t HealthController::GetBedtimeEndHour() const {
+  return settingsController.GetBedtimeEndHour();
 }
 
 void HealthController::OnHourTick() {
@@ -92,13 +114,8 @@ void HealthController::OnNewDay() {
   ringsClosedToday = false;
   ringsJustClosed = false;
 
-  lastNightStillHalfHours = stillHalfHoursTonight;
-  stillHalfHoursTonight = 0;
-
-  lastNightLightHalfHours = lightHalfHoursTonight;
-  lightHalfHoursTonight = 0;
-  lastNightDeepHalfHours = deepHalfHoursTonight;
-  deepHalfHoursTonight = 0;
+  // Sleep counters are *not* rolled over here: a night spans midnight, so "last night" is
+  // published when the sleep window ends instead (see OnHalfHourTick).
 
   // Deliberately not saving here. This runs from SystemTask at midnight, when the watch is
   // almost always asleep and the SPI-NOR flash is in deep power-down - a flash write then
