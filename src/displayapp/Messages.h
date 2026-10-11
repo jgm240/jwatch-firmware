@@ -33,6 +33,7 @@ namespace Pinetime {
         HapticNavArrive,
         StandNudge,
         ShakeSilence,
+        FindWatch,
       };
     }
   }

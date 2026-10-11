@@ -84,12 +84,36 @@ void Battery::SaadcEventHandler(nrfx_saadc_evt_t const* p_event) {
     if ((isPowerPresent && newPercent > percentRemaining) || (!isPowerPresent && newPercent < percentRemaining) || firstMeasurement) {
       firstMeasurement = false;
       percentRemaining = newPercent;
+      UpdateDrainEstimate();
       systemTask->PushMessage(System::Messages::BatteryPercentageUpdated);
     }
 
     nrfx_saadc_uninit();
     isReading = false;
   }
+}
+
+void Battery::UpdateDrainEstimate() {
+  const uint32_t now = xTaskGetTickCount();
+  if (isPowerPresent || drainBaselinePercent == 0xff || percentRemaining >= drainBaselinePercent) {
+    // Charging, first sample, or the level went up: start measuring from here.
+    drainBaselinePercent = isPowerPresent ? uint8_t {0xff} : percentRemaining;
+    drainBaselineTick = now;
+    if (isPowerPresent) {
+      drainPercentPerHourX100 = 0;
+    }
+    return;
+  }
+
+  const uint64_t elapsedMs = static_cast<uint64_t>(now - drainBaselineTick) * 1000 / configTICK_RATE_HZ;
+  if (elapsedMs < 20 * 60 * 1000) {
+    return;
+  }
+  const uint64_t dropped = drainBaselinePercent - percentRemaining;
+  const uint32_t rateX100 = static_cast<uint32_t>(dropped * 100 * 3600000ull / elapsedMs);
+  drainPercentPerHourX100 = drainPercentPerHourX100 == 0 ? rateX100 : (drainPercentPerHourX100 * 7 + rateX100 * 3) / 10;
+  drainBaselinePercent = percentRemaining;
+  drainBaselineTick = now;
 }
 
 void Battery::Register(Pinetime::System::SystemTask* systemTask) {

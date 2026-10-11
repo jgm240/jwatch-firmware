@@ -79,6 +79,44 @@ void HealthController::OnHalfHourTick() {
   CheckRingsClosed();
 }
 
+void HealthController::StartWorkout() {
+  workoutRunning = true;
+  workoutStartLocal = static_cast<uint32_t>(
+    std::chrono::duration_cast<std::chrono::seconds>(dateTimeController.CurrentDateTime().time_since_epoch()).count());
+  workoutStartSteps = motionController.NbSteps();
+  workoutHeartRateSum = 0;
+  workoutHeartRateCount = 0;
+  workoutHeartRateMax = 0;
+}
+
+void HealthController::RecordWorkoutHeartRate(uint8_t bpm) {
+  if (!workoutRunning || bpm == 0) {
+    return;
+  }
+  workoutHeartRateSum += bpm;
+  workoutHeartRateCount++;
+  if (bpm > workoutHeartRateMax) {
+    workoutHeartRateMax = bpm;
+  }
+}
+
+void HealthController::StopWorkout(uint32_t durationSeconds) {
+  if (!workoutRunning) {
+    return;
+  }
+  workoutRunning = false;
+  const uint32_t nowSteps = motionController.NbSteps();
+  const uint32_t steps = nowSteps >= workoutStartSteps ? nowSteps - workoutStartSteps : 0;
+  lastWorkout.valid = true;
+  lastWorkout.startLocalEpoch = workoutStartLocal;
+  lastWorkout.durationSeconds = durationSeconds;
+  lastWorkout.avgHeartRate = workoutHeartRateCount > 0 ? static_cast<uint8_t>(workoutHeartRateSum / workoutHeartRateCount) : 0;
+  lastWorkout.maxHeartRate = workoutHeartRateMax;
+  lastWorkout.steps = static_cast<uint16_t>(steps > 65535 ? 65535 : steps);
+  const uint32_t calories = EstimateCalories(steps);
+  lastWorkout.calories = static_cast<uint16_t>(calories > 65535 ? 65535 : calories);
+}
+
 uint8_t HealthController::GetBedtimeEndHour() const {
   return settingsController.GetBedtimeEndHour();
 }

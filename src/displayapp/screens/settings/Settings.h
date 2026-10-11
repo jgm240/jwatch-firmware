@@ -55,7 +55,7 @@ namespace Pinetime {
           {Symbols::bell, "Assists", Apps::SettingAssist},
           {Symbols::paintbrush, "Modular face", Apps::SettingModularWatchFace},
           {Symbols::list, "Quick Actions", Apps::SettingQuickActions},
-          {Symbols::none, "", Apps::None},
+          {Symbols::bell, "Reminders", Apps::SettingReminders},
 
           {Symbols::paintbrush, "Watchface style", Apps::SettingWatchFaceSimpleStyle},
           {Symbols::list, "App menu", Apps::SettingAppMenuStyle},

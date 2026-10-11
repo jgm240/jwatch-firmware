@@ -24,7 +24,7 @@ namespace Pinetime {
         bool OnTouchEvent(TouchEvents event) override;
 
         static constexpr int optionsPerScreen = 4;
-        static constexpr int optionsCount = 11;
+        static constexpr int optionsCount = 14;
         static constexpr int pagesPerSlot = (optionsCount - 1) / optionsPerScreen + 1;
         static constexpr int nSlots = Controllers::Settings::modularWatchFaceSlots;
         static constexpr int nScreens = nSlots * pagesPerSlot;

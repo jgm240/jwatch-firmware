@@ -69,6 +69,9 @@ int ImmediateAlertService::OnAlertLevelChanged(uint16_t attributeHandle, ble_gat
       notificationManager.Push(std::move(notif));
 
       systemTask.PushMessage(Pinetime::System::Messages::OnNewNotification);
+      if (alertLevel == Levels::HighAlert) {
+        systemTask.PushMessage(Pinetime::System::Messages::FindWatch);
+      }
     }
   }
 

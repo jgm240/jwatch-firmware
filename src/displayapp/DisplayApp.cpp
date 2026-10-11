@@ -83,6 +83,8 @@
 #include "displayapp/screens/Calendar.h"
 #include "displayapp/screens/Camera.h"
 #include "displayapp/screens/settings/SettingAssist.h"
+#include "displayapp/screens/settings/SettingReminders.h"
+#include "displayapp/screens/Workout.h"
 #include "displayapp/screens/Mindfulness.h"
 #include "displayapp/screens/ActivityRings.h"
 #include "displayapp/screens/SleepTracking.h"
@@ -102,6 +104,10 @@ namespace {
   constexpr Pinetime::Controllers::PatternData navLeftPattern = {2, {70, 70}, {110, 0}};
   constexpr Pinetime::Controllers::PatternData navRightPattern = {1, {350}, {0}};
   constexpr Pinetime::Controllers::PatternData navArrivePattern = {3, {50, 50, 220}, {80, 80, 0}};
+  // Find my watch: eight 0.4 s buzzes (about 5 s) - JWLink can re-trigger it.
+  constexpr Pinetime::Controllers::PatternData findWatchPattern = {8,
+                                                                 {400, 400, 400, 400, 400, 400, 400, 400},
+                                                                 {250, 250, 250, 250, 250, 250, 250, 0}};
 }
 using namespace Pinetime::Applications::Display;
 
@@ -683,6 +689,9 @@ void DisplayApp::Refresh() {
       case Messages::StandNudge:
         motorController.RunPattern(Controllers::VibrationPatterns::Triple);
         break;
+      case Messages::FindWatch:
+        motorController.RunPattern(findWatchPattern);
+        break;
       case Messages::ShakeSilence:
         if (currentApp == Apps::Alarm && alarmController.IsAlerting()) {
           currentScreen->OnButtonPushed();
@@ -934,6 +943,9 @@ void DisplayApp::LoadScreen(Apps app, DisplayApp::FullRefreshDirections directio
       break;
     case Apps::SettingAssist:
       currentScreen = std::make_unique<Screens::SettingAssist>(settingsController);
+      break;
+    case Apps::SettingReminders:
+      currentScreen = std::make_unique<Screens::SettingReminders>(settingsController);
       break;
     case Apps::SettingWakeUp:
       currentScreen = std::make_unique<Screens::SettingWakeUp>(settingsController);

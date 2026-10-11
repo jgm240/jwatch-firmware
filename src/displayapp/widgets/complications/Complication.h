@@ -19,7 +19,10 @@ namespace Pinetime {
         NowPlaying,
         Cube,
         FitnessRings,
-        NextEvent
+        NextEvent,
+        Countdown,
+        Sun,
+        PhoneBattery
       };
 
       class Complication {

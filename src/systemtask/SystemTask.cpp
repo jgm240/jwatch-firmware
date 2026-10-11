@@ -1,4 +1,8 @@
 #include "systemtask/SystemTask.h"
+#include <algorithm>
+#include <chrono>
+#include <cstdio>
+#include <cstring>
 #include <hal/nrf_rtc.h>
 #include <libraries/gpiote/app_gpiote.h>
 #include <libraries/log/nrf_log.h>
@@ -256,6 +260,10 @@ void SystemTask::Work() {
           GoToRunning();
           displayApp.PushMessage(Pinetime::Applications::Display::Messages::AlarmTriggered);
           break;
+        case Messages::FindWatch:
+          GoToRunning();
+          displayApp.PushMessage(Pinetime::Applications::Display::Messages::FindWatch);
+          break;
         case Messages::BleConnected:
           displayApp.PushMessage(Pinetime::Applications::Display::Messages::NotifyDeviceActivity);
           isBleDiscoveryTimerRunning = true;
@@ -368,6 +376,12 @@ void SystemTask::Work() {
         case Messages::OnNewHour:
           using Pinetime::Controllers::AlarmController;
           healthController.OnHourTick();
+          if (settingsController.GetHydrationReminders()) {
+            const uint8_t hour = dateTimeController.Hours();
+            if (hour >= 9 && hour <= 21 && (hour % 2) == 1) {
+              PostNotification("Hydrate", "Time for some water");
+            }
+          }
           displayApp.PushMessage(Pinetime::Applications::Display::Messages::UpdateNightMode);
           if (healthController.ConsumeRingsJustClosed() &&
               settingsController.GetNotificationStatus() != Controllers::Settings::Notification::Sleep) {
@@ -383,6 +397,10 @@ void SystemTask::Work() {
         case Messages::OnNewHalfHour:
           using Pinetime::Controllers::AlarmController;
           healthController.OnHalfHourTick();
+          if (settingsController.GetBedtimeReminder() && dateTimeController.Minutes() >= 30 &&
+              ((dateTimeController.Hours() + 1) % 24) == settingsController.GetBedtimeStartHour()) {
+            PostNotification("Wind down", "Bedtime in 30 minutes");
+          }
           if (healthController.ConsumeStandNudge() && settingsController.GetStandReminders() &&
               settingsController.GetNotificationStatus() != Controllers::Settings::Notification::Sleep) {
             Pinetime::Controllers::NotificationManager::Notification nudge;
@@ -522,9 +540,58 @@ void SystemTask::GoToSleep() {
   state = SystemTaskState::GoingToSleep;
 };
 
+void SystemTask::PostNotification(const char* title, const char* body) {
+  if (settingsController.GetNotificationStatus() == Controllers::Settings::Notification::Sleep) {
+    return;
+  }
+  Pinetime::Controllers::NotificationManager::Notification notification;
+  // Same layout the phone sends: "title\0body\0".
+  const size_t titleLength = std::min<size_t>(std::strlen(title), 30);
+  const size_t bodyLength = std::min<size_t>(std::strlen(body), 60);
+  std::memcpy(notification.message.data(), title, titleLength);
+  notification.message[titleLength] = '\0';
+  std::memcpy(&notification.message[titleLength + 1], body, bodyLength);
+  notification.message[titleLength + 1 + bodyLength] = '\0';
+  notification.size = static_cast<uint8_t>(titleLength + 1 + bodyLength + 1);
+  notification.category = Pinetime::Controllers::NotificationManager::Categories::SimpleAlert;
+  notificationManager.Push(std::move(notification));
+  if (settingsController.GetNotificationStatus() == Controllers::Settings::Notification::On) {
+    GoToRunning();
+    displayApp.PushMessage(Pinetime::Applications::Display::Messages::NewNotification);
+  }
+}
+
 void SystemTask::HandleAssists() {
   using DisplayMessages = Pinetime::Applications::Display::Messages;
   const TickType_t now = xTaskGetTickCount();
+
+  // Phone asked us to re-read /settings.dat (it just restored a backup over the file service).
+  if (nimbleController.calendar().ConsumeCommand() == 1) {
+    settingsController.Reload();
+  }
+
+  // Calendar event reminders: once per event, when it starts within the next 10 minutes.
+  if (settingsController.GetEventReminders() && (now - lastEventCheckTick) > pdMS_TO_TICKS(30 * 1000)) {
+    lastEventCheckTick = now;
+    const auto& calendar = nimbleController.calendar();
+    const int64_t nowLocal =
+      std::chrono::duration_cast<std::chrono::seconds>(dateTimeController.CurrentDateTime().time_since_epoch()).count();
+    for (uint8_t i = 0; i < calendar.NbEvents(); i++) {
+      const auto& event = calendar.GetEvent(i);
+      if (event.title[0] == '>' && event.title[1] == ' ') {
+        continue; // all-day items have no meaningful "starts in N minutes"
+      }
+      const int64_t startLocal = dateTimeController.UtcEpochToLocalEpoch(event.start);
+      const int64_t delta = startLocal - nowLocal;
+      if (delta > 0 && delta <= 10 * 60 && static_cast<uint64_t>(startLocal) != lastReminderStart) {
+        lastReminderStart = static_cast<uint64_t>(startLocal);
+        char body[24];
+        std::snprintf(body, sizeof(body), "in %d min", static_cast<int>((delta + 59) / 60));
+        PostNotification(event.title.data(), body);
+        break;
+      }
+    }
+  }
 
   // Turn-by-turn haptics. Always drain the pending turn so a stale one can't fire much later.
   const uint8_t turn = nimbleController.navigation().ConsumeTurn();

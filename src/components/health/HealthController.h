@@ -37,6 +37,28 @@ namespace Pinetime {
 
       uint8_t GetBedtimeEndHour() const;
 
+      // Workout mode: a start/stop session with continuous heart rate. The phone reads the summary
+      // (see HealthSyncService) and records it as a real workout in Apple Health.
+      struct WorkoutSummary {
+        bool valid = false;
+        uint32_t startLocalEpoch = 0; // wall-clock start, encoded as an epoch (see DateTime)
+        uint32_t durationSeconds = 0;
+        uint8_t avgHeartRate = 0;
+        uint8_t maxHeartRate = 0;
+        uint16_t steps = 0;
+        uint16_t calories = 0;
+      };
+
+      void StartWorkout();
+      void RecordWorkoutHeartRate(uint8_t bpm);
+      void StopWorkout(uint32_t durationSeconds);
+      bool IsWorkoutRunning() const {
+        return workoutRunning;
+      }
+      const WorkoutSummary& LastWorkout() const {
+        return lastWorkout;
+      }
+
       // True at most once per half hour: awake hours, no real movement in the first half of this
       // hour, and the day's stand goal not reached yet. Clears itself on read.
       bool ConsumeStandNudge() {
@@ -95,6 +117,13 @@ namespace Pinetime {
       bool ringsJustClosed = false;
       bool standNudgePending = false;
       bool wasInSleepWindow = false;
+      bool workoutRunning = false;
+      uint32_t workoutStartLocal = 0;
+      uint32_t workoutStartSteps = 0;
+      uint32_t workoutHeartRateSum = 0;
+      uint32_t workoutHeartRateCount = 0;
+      uint8_t workoutHeartRateMax = 0;
+      WorkoutSummary lastWorkout;
 
       static uint32_t CurrentDayNumber(DateTime& dateTimeController);
 

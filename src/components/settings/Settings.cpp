@@ -31,7 +31,7 @@ void Settings::LoadSettingsFromFile() {
   }
   fs.FileRead(&settingsFile, reinterpret_cast<uint8_t*>(&bufferSettings), sizeof(settings));
   fs.FileClose(&settingsFile);
-  if (bufferSettings.version == settingsVersion || bufferSettings.version == settingsVersionPrefixCompatible) {
+  if ((bufferSettings.version >= settingsVersionPrefixCompatible && bufferSettings.version <= settingsVersion)) {
     bufferSettings.version = settingsVersion;
     settings = bufferSettings;
   }

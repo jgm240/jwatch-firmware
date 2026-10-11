@@ -10,6 +10,9 @@
 #include "displayapp/widgets/complications/CubeComplication.h"
 #include "displayapp/widgets/complications/FitnessRingsComplication.h"
 #include "displayapp/widgets/complications/NextEventComplication.h"
+#include "displayapp/widgets/complications/CountdownComplication.h"
+#include "displayapp/widgets/complications/SunComplication.h"
+#include "displayapp/widgets/complications/PhoneBatteryComplication.h"
 
 using namespace Pinetime::Applications::Widgets;
 
@@ -37,6 +40,12 @@ std::unique_ptr<Complication> Pinetime::Applications::Widgets::CreateComplicatio
       return std::make_unique<FitnessRingsComplication>(controllers.healthController, controllers.settingsController);
     case ComplicationType::NextEvent:
       return std::make_unique<NextEventComplication>(*controllers.calendarService, controllers.dateTimeController);
+    case ComplicationType::Countdown:
+      return std::make_unique<CountdownComplication>(*controllers.calendarService, controllers.dateTimeController);
+    case ComplicationType::Sun:
+      return std::make_unique<SunComplication>(*controllers.weatherController, controllers.dateTimeController);
+    case ComplicationType::PhoneBattery:
+      return std::make_unique<PhoneBatteryComplication>(*controllers.calendarService);
     case ComplicationType::None:
     default:
       return nullptr;

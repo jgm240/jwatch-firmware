@@ -1,0 +1,43 @@
+name: Release
+
+# Push a tag like v1.14.0 and this builds the firmware and publishes a GitHub release with the DFU
+# packages attached, so a release doesn't depend on anyone's local toolchain.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-22.04
+    container:
+      image: infinitime/infinitime-build
+    env:
+      SOURCES_DIR: .
+    steps:
+      - name: Checkout source files
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          # See main.yml: build.sh's last step (a resources zip JWatch doesn't produce) fails after
+          # everything we need has been built and copied, so verify the outputs explicitly instead.
+          /opt/build.sh all || echo "build.sh exited non-zero (expected: no resources zip) - checking outputs"
+          ls -la build/output
+          ls build/output/pinetime-mcuboot-app-dfu-*.zip
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          fail_on_unmatched_files: false
+          files: |
+            build/output/pinetime-mcuboot-app-dfu-*.zip
+            build/output/pinetime-mcuboot-recovery-dfu-*.zip

@@ -393,7 +393,12 @@ list(APPEND SOURCE_FILES
         displayapp/screens/Calendar.cpp
         displayapp/screens/Camera.cpp
         displayapp/screens/settings/SettingAssist.cpp
+        displayapp/screens/settings/SettingReminders.cpp
+        displayapp/screens/Workout.cpp
         displayapp/widgets/complications/NextEventComplication.cpp
+        displayapp/widgets/complications/CountdownComplication.cpp
+        displayapp/widgets/complications/SunComplication.cpp
+        displayapp/widgets/complications/PhoneBatteryComplication.cpp
         displayapp/widgets/HexagonGauge.cpp
         displayapp/screens/Mindfulness.cpp
         displayapp/screens/ActivityRings.cpp

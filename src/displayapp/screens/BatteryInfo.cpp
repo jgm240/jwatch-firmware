@@ -62,7 +62,14 @@ void BatteryInfo::Refresh() {
     lv_label_set_text_static(status, "Fully charged");
   } else if (batteryPercent > 15) {
     lv_obj_set_style_local_line_color(chargingArc, LV_ARC_PART_INDIC, LV_STATE_DEFAULT, LV_COLOR_GREEN);
-    lv_label_set_text_static(status, "Discharging");
+    const uint32_t minutesLeft = batteryController.MinutesRemaining();
+    if (minutesLeft == 0) {
+      lv_label_set_text_static(status, "Discharging");
+    } else if (minutesLeft >= 48 * 60) {
+      lv_label_set_text_fmt(status, "~%lu days left", minutesLeft / (24 * 60));
+    } else {
+      lv_label_set_text_fmt(status, "~%luh left", minutesLeft / 60);
+    }
   } else if (batteryPercent > 5) {
     lv_obj_set_style_local_line_color(chargingArc, LV_ARC_PART_INDIC, LV_STATE_DEFAULT, LV_COLOR_ORANGE);
     lv_label_set_text_static(status, "Battery low");

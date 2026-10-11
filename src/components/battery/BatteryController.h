@@ -32,6 +32,12 @@ namespace Pinetime {
         return isPowerPresent;
       }
 
+      // Estimated minutes of battery left at the recently observed drain rate; 0 = not known yet
+      // (needs ~20 min of discharge without charging, and resets whenever power is connected).
+      uint32_t MinutesRemaining() const {
+        return drainPercentPerHourX100 == 0 ? 0 : (static_cast<uint32_t>(percentRemaining) * 6000) / drainPercentPerHourX100;
+      }
+
     private:
       static Battery* instance;
       nrf_saadc_value_t saadc_value;
@@ -44,6 +50,11 @@ namespace Pinetime {
       bool isCharging = false;
       bool isPowerPresent = false;
       bool firstMeasurement = true;
+
+      void UpdateDrainEstimate();
+      uint8_t drainBaselinePercent = 0xff;
+      uint32_t drainBaselineTick = 0;
+      uint32_t drainPercentPerHourX100 = 0;
 
       void SaadcInit();
 

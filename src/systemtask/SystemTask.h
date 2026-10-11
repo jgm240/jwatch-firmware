@@ -147,6 +147,9 @@ namespace Pinetime {
       void GoToSleep();
       void UpdateMotion();
       void HandleAssists();
+      void PostNotification(const char* title, const char* body);
+      TickType_t lastEventCheckTick = 0;
+      uint64_t lastReminderStart = 0;
       TickType_t callShakeWindowEnd = 0;
       TickType_t lastShakeSilenceTick = 0;
       static constexpr TickType_t batteryMeasurementPeriod = pdMS_TO_TICKS(10 * 60 * 1000);

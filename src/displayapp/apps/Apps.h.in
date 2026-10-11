@@ -60,6 +60,8 @@ namespace Pinetime {
       Calendar,
       Camera,
       SettingAssist,
+      SettingReminders,
+      Workout,
       Mindfulness,
       ActivityRings,
       SleepTracking,

@@ -23,6 +23,9 @@ void NextEventComplication::Update() {
   int found = -1;
   for (uint8_t i = 0; i < calendarEventService.NbEvents(); i++) {
     const auto& event = calendarEventService.GetEvent(i);
+    if (event.title[0] == '>' && event.title[1] == ' ') {
+      continue;
+    }
     const uint64_t end = event.end > event.start ? event.end : event.start;
     if (dateTimeController.UtcEpochToLocalEpoch(end) >= now) {
       found = i;

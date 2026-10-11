@@ -101,6 +101,10 @@ namespace Pinetime {
 
       void Init();
       void SaveSettings();
+      // Re-read /settings.dat (used after the phone app restores a backup over BLE).
+      void Reload() {
+        LoadSettingsFromFile();
+      }
 
       void SetWatchFace(Pinetime::Applications::WatchFace face) {
         if (face != settings.watchFace) {
@@ -666,6 +670,39 @@ namespace Pinetime {
         return settings.shakeToSilence;
       };
 
+      void SetEventReminders(bool enabled) {
+        if (enabled != settings.eventReminders) {
+          settingsChanged = true;
+        }
+        settings.eventReminders = enabled;
+      };
+
+      bool GetEventReminders() const {
+        return settings.eventReminders;
+      };
+
+      void SetHydrationReminders(bool enabled) {
+        if (enabled != settings.hydrationReminders) {
+          settingsChanged = true;
+        }
+        settings.hydrationReminders = enabled;
+      };
+
+      bool GetHydrationReminders() const {
+        return settings.hydrationReminders;
+      };
+
+      void SetBedtimeReminder(bool enabled) {
+        if (enabled != settings.bedtimeReminder) {
+          settingsChanged = true;
+        }
+        settings.bedtimeReminder = enabled;
+      };
+
+      bool GetBedtimeReminder() const {
+        return settings.bedtimeReminder;
+      };
+
       static constexpr size_t activityHistoryDays = 6;
 
       struct DailyActivity {
@@ -803,7 +840,7 @@ namespace Pinetime {
     private:
       Pinetime::Controllers::FS& fs;
 
-      static constexpr uint32_t settingsVersion = 0x001C;
+      static constexpr uint32_t settingsVersion = 0x001D;
       // Files from this version are a strict prefix of the current layout (fields are only ever
       // appended), so they load fine and just keep the defaults for the new trailing fields.
       static constexpr uint32_t settingsVersionPrefixCompatible = 0x001B;
@@ -874,6 +911,9 @@ namespace Pinetime {
         bool standReminders = false;
         bool hapticNavigation = true;
         bool shakeToSilence = true;
+        bool eventReminders = false;
+        bool hydrationReminders = false;
+        bool bedtimeReminder = false;
       };
 
       SettingsData settings;

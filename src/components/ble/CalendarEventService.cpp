@@ -6,6 +6,8 @@ using namespace Pinetime::Controllers;
 
 constexpr ble_uuid128_t CalendarEventService::serviceUuid;
 constexpr ble_uuid128_t CalendarEventService::eventCharUuid;
+constexpr ble_uuid128_t CalendarEventService::phoneBatteryCharUuid;
+constexpr ble_uuid128_t CalendarEventService::commandCharUuid;
 
 namespace {
   uint64_t ToUInt64(const uint8_t* data) {
@@ -21,6 +23,16 @@ CalendarEventService::CalendarEventService()
                                 .arg = this,
                                 .flags = BLE_GATT_CHR_F_WRITE,
                                 .val_handle = &eventHandle},
+                              {.uuid = &phoneBatteryCharUuid.u,
+                                .access_cb = OnAccessCb,
+                                .arg = this,
+                                .flags = BLE_GATT_CHR_F_WRITE,
+                                .val_handle = &phoneBatteryHandle},
+                              {.uuid = &commandCharUuid.u,
+                                .access_cb = OnAccessCb,
+                                .arg = this,
+                                .flags = BLE_GATT_CHR_F_WRITE,
+                                .val_handle = &commandHandle},
                               {0}},
     serviceDefinition {
       {.type = BLE_GATT_SVC_TYPE_PRIMARY, .uuid = &serviceUuid.u, .characteristics = characteristicDefinition},
@@ -42,12 +54,29 @@ int CalendarEventService::OnAccess(ble_gatt_access_ctxt* ctxt) {
     return 0;
   }
 
-  // Wire format for one event slot:
+  const size_t receivedSize = OS_MBUF_PKTLEN(ctxt->om);
+
+  if (ble_uuid_cmp(ctxt->chr->uuid, &phoneBatteryCharUuid.u) == 0) {
+    if (receivedSize >= 2) {
+      uint8_t data[2];
+      os_mbuf_copydata(ctxt->om, 0, 2, data);
+      phoneBatteryPercent = std::min<uint8_t>(data[0], 100);
+      phoneCharging = data[1] != 0;
+    }
+    return 0;
+  }
+
+  if (ble_uuid_cmp(ctxt->chr->uuid, &commandCharUuid.u) == 0) {
+    if (receivedSize >= 1) {
+      os_mbuf_copydata(ctxt->om, 0, 1, &pendingCommand);
+    }
+    return 0;
+  }
+
+  // Event slot wire format:
   // [0] index, [1] total event count for this sync, [2..9] start epoch (u64 LE),
   // [10..17] end epoch (u64 LE), [18] title length, [19..] title bytes.
   static constexpr size_t headerSize = 19;
-
-  size_t receivedSize = OS_MBUF_PKTLEN(ctxt->om);
   if (receivedSize < headerSize) {
     return 0;
   }

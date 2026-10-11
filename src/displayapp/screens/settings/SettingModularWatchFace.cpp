@@ -25,6 +25,9 @@ namespace {
     {Pinetime::Applications::Widgets::ComplicationType::Cube, "Cube"},
     {Pinetime::Applications::Widgets::ComplicationType::FitnessRings, "Fitness Hexagons"},
     {Pinetime::Applications::Widgets::ComplicationType::NextEvent, "Next Event"},
+    {Pinetime::Applications::Widgets::ComplicationType::Countdown, "Countdown"},
+    {Pinetime::Applications::Widgets::ComplicationType::Sun, "Sunrise/Sunset"},
+    {Pinetime::Applications::Widgets::ComplicationType::PhoneBattery, "Phone battery"},
   }};
 
   constexpr std::array<const char*, SettingModularWatchFace::nSlots> slotTitles =
