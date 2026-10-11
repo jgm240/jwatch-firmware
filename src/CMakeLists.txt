@@ -395,6 +395,7 @@ list(APPEND SOURCE_FILES
         displayapp/screens/settings/SettingAssist.cpp
         displayapp/screens/settings/SettingReminders.cpp
         displayapp/screens/Workout.cpp
+        displayapp/screens/Reconnect.cpp
         displayapp/widgets/complications/NextEventComplication.cpp
         displayapp/widgets/complications/CountdownComplication.cpp
         displayapp/widgets/complications/SunComplication.cpp

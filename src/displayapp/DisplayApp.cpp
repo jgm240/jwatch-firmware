@@ -85,6 +85,7 @@
 #include "displayapp/screens/settings/SettingAssist.h"
 #include "displayapp/screens/settings/SettingReminders.h"
 #include "displayapp/screens/Workout.h"
+#include "displayapp/screens/Reconnect.h"
 #include "displayapp/screens/Mindfulness.h"
 #include "displayapp/screens/ActivityRings.h"
 #include "displayapp/screens/SleepTracking.h"

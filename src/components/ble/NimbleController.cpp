@@ -166,10 +166,12 @@ void NimbleController::StartAdvertising() {
   adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
   adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
   /* fast advertise for 30 sec */
-  if (fastAdvCount < 15) {
+  if (holdFastAdv || fastAdvCount < 15) {
     adv_params.itvl_min = 32;
     adv_params.itvl_max = 47;
-    fastAdvCount++;
+    if (fastAdvCount < 15) {
+      fastAdvCount++;
+    }
   } else {
     adv_params.itvl_min = 1636;
     adv_params.itvl_max = 1651;
@@ -446,6 +448,21 @@ void NimbleController::SetDeviceName(const char* name) {
   // connection ends, which will pick up the buffer we just updated - no need to risk
   // calling ble_gap_adv_start() while a connection (and possibly its own advertising
   // for additional centrals) is already active.
+}
+
+void NimbleController::MakeDiscoverable() {
+  if (!bleController.IsRadioEnabled()) {
+    EnableRadio();
+    return;
+  }
+  fastAdvCount = 0;
+  if (connectionHandle != BLE_HS_CONN_HANDLE_NONE) {
+    // Drop the (possibly stale) connection; the disconnect handler restarts advertising.
+    ble_gap_terminate(connectionHandle, BLE_ERR_REM_USER_CONN_TERM);
+  } else {
+    ble_gap_adv_stop(); // harmless if we weren't advertising
+    StartAdvertising();
+  }
 }
 
 void NimbleController::EnableRadio() {

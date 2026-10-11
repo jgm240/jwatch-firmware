@@ -105,6 +105,15 @@ namespace Pinetime {
         fastAdvCount = 0;
       };
 
+      // Makes the watch connectable right now without toggling Bluetooth: drops whoever is (or
+      // thinks it still is) connected and restarts advertising at the fast interval. With
+      // HoldFastAdvertising(true) it also stays at the fast interval instead of backing off after
+      // 30 s - the Reconnect app holds it while it is open.
+      void MakeDiscoverable();
+      void HoldFastAdvertising(bool hold) {
+        holdFastAdv = hold;
+      };
+
       void EnableRadio();
       void DisableRadio();
 
@@ -145,6 +154,7 @@ namespace Pinetime {
       uint8_t addrType;
       uint16_t connectionHandle = BLE_HS_CONN_HANDLE_NONE;
       uint8_t fastAdvCount = 0;
+      bool holdFastAdv = false;
       uint8_t bondId[16] = {0};
     };
 

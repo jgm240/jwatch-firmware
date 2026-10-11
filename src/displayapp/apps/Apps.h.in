@@ -62,6 +62,7 @@ namespace Pinetime {
       SettingAssist,
       SettingReminders,
       Workout,
+      Reconnect,
       Mindfulness,
       ActivityRings,
       SleepTracking,
