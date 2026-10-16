@@ -6,34 +6,28 @@
 #include "displayapp/screens/Screen.h"
 #include "displayapp/Controllers.h"
 #include "components/datetime/DateTimeController.h"
+#include "components/datetime/WorldTime.h"
+#include "components/settings/Settings.h"
 #include "Symbols.h"
 
 namespace Pinetime {
   namespace Applications {
     namespace Screens {
 
+      // Local time in up to five cities (picked in Settings > World clock), daylight saving included.
       class WorldClock : public Screen {
       public:
-        explicit WorldClock(Controllers::DateTime& dateTimeController);
+        WorldClock(Controllers::DateTime& dateTimeController, Controllers::Settings& settingsController);
         ~WorldClock() override;
 
         void Refresh() override;
 
       private:
-        struct City {
-          const char* name;
-          int8_t utcOffsetHours;
-        };
-
-        static constexpr std::array<City, 4> cities = {{
-          {"New York", -5},
-          {"London", 0},
-          {"Tokyo", 9},
-          {"Sydney", 10},
-        }};
-
         Controllers::DateTime& dateTimeController;
-        std::array<lv_obj_t*, cities.size()> valueLabels {};
+        Controllers::Settings& settingsController;
+        std::array<lv_obj_t*, Controllers::worldClockSlots> nameLabels {};
+        std::array<lv_obj_t*, Controllers::worldClockSlots> timeLabels {};
+        std::array<lv_obj_t*, Controllers::worldClockSlots> detailLabels {};
 
         lv_task_t* taskRefresh;
       };
@@ -45,7 +39,7 @@ namespace Pinetime {
       static constexpr const char* icon = Screens::Symbols::clock;
 
       static Screens::Screen* Create(AppControllers& controllers) {
-        return new Screens::WorldClock(controllers.dateTimeController);
+        return new Screens::WorldClock(controllers.dateTimeController, controllers.settingsController);
       };
 
       static bool IsAvailable(Pinetime::Controllers::FS& /*filesystem*/) {

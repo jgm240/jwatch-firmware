@@ -653,7 +653,7 @@ void SystemTask::HandleAssists() {
       settingsController.SetInfineatColorIndex(faceConfig[7]);
     }
     for (size_t i = 0; i < Settings::modularWatchFaceSlots; i++) {
-      if (faceConfig[8 + i] <= static_cast<uint8_t>(Pinetime::Applications::Widgets::ComplicationType::PhoneBattery)) {
+      if (faceConfig[8 + i] <= static_cast<uint8_t>(Pinetime::Applications::Widgets::ComplicationType::WorldClock)) {
         settingsController.SetModularSlot(i, static_cast<Pinetime::Applications::Widgets::ComplicationType>(faceConfig[8 + i]));
       }
     }

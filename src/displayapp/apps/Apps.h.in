@@ -34,6 +34,8 @@ namespace Pinetime {
       QuickSettings,
       Settings,
       SettingWatchFace,
+      FaceEditor,
+      SettingWorldClock,
       SettingTimeFormat,
       SettingWeatherFormat,
       SettingHeartRate,

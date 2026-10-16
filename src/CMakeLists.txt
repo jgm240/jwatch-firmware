@@ -396,6 +396,10 @@ list(APPEND SOURCE_FILES
         displayapp/screens/settings/SettingReminders.cpp
         displayapp/screens/Workout.cpp
         displayapp/screens/Reconnect.cpp
+        displayapp/screens/settings/FaceEditor.cpp
+        displayapp/screens/settings/SettingWorldClock.cpp
+        components/datetime/WorldTime.cpp
+        displayapp/widgets/complications/WorldClockComplication.cpp
         displayapp/widgets/complications/NextEventComplication.cpp
         displayapp/widgets/complications/CountdownComplication.cpp
         displayapp/widgets/complications/SunComplication.cpp

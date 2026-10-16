@@ -22,7 +22,8 @@ namespace Pinetime {
         NextEvent,
         Countdown,
         Sun,
-        PhoneBattery
+        PhoneBattery,
+        WorldClock
       };
 
       class Complication {

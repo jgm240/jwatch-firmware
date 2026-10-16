@@ -13,6 +13,7 @@
 #include "displayapp/widgets/complications/CountdownComplication.h"
 #include "displayapp/widgets/complications/SunComplication.h"
 #include "displayapp/widgets/complications/PhoneBatteryComplication.h"
+#include "displayapp/widgets/complications/WorldClockComplication.h"
 
 using namespace Pinetime::Applications::Widgets;
 
@@ -46,6 +47,8 @@ std::unique_ptr<Complication> Pinetime::Applications::Widgets::CreateComplicatio
       return std::make_unique<SunComplication>(*controllers.weatherController, controllers.dateTimeController);
     case ComplicationType::PhoneBattery:
       return std::make_unique<PhoneBatteryComplication>(*controllers.calendarService);
+    case ComplicationType::WorldClock:
+      return std::make_unique<WorldClockComplication>(controllers.dateTimeController, controllers.settingsController);
     case ComplicationType::None:
     default:
       return nullptr;

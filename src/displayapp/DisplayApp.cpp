@@ -52,6 +52,8 @@
 #include "displayapp/screens/settings/QuickSettings.h"
 #include "displayapp/screens/settings/Settings.h"
 #include "displayapp/screens/settings/SettingWatchFace.h"
+#include "displayapp/screens/settings/FaceEditor.h"
+#include "displayapp/screens/settings/SettingWorldClock.h"
 #include "displayapp/screens/settings/SettingTimeFormat.h"
 #include "displayapp/screens/settings/SettingWeatherFormat.h"
 #include "displayapp/screens/settings/SettingWakeUp.h"
@@ -956,6 +958,16 @@ void DisplayApp::LoadScreen(Apps app, DisplayApp::FullRefreshDirections directio
                                                 userWatchFace.isAvailable(controllers.filesystem)};
       });
       currentScreen = std::make_unique<Screens::SettingWatchFace>(this, std::move(items), settingsController, filesystem);
+    } break;
+    case Apps::SettingWorldClock:
+      currentScreen = std::make_unique<Screens::SettingWorldClock>(settingsController);
+      break;
+    case Apps::FaceEditor: {
+      std::array<Screens::FaceEditor::Item, UserWatchFaceTypes::Count> items;
+      std::ranges::transform(userWatchFaces, items.begin(), [this](const WatchFaceDescription& userWatchFace) {
+        return Screens::FaceEditor::Item {userWatchFace.name, userWatchFace.watchFace, userWatchFace.isAvailable(controllers.filesystem)};
+      });
+      currentScreen = std::make_unique<Screens::FaceEditor>(this, std::move(items), settingsController);
     } break;
     case Apps::SettingTimeFormat:
       currentScreen = std::make_unique<Screens::SettingTimeFormat>(settingsController);

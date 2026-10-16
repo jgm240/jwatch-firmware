@@ -659,6 +659,17 @@ namespace Pinetime {
         return settings.hapticNavigation;
       };
 
+      uint8_t GetWorldClockCity(size_t slot) const {
+        return slot < settings.worldClockCities.size() ? settings.worldClockCities[slot] : 0;
+      };
+
+      void SetWorldClockCity(size_t slot, uint8_t city) {
+        if (slot < settings.worldClockCities.size() && settings.worldClockCities[slot] != city) {
+          settings.worldClockCities[slot] = city;
+          settingsChanged = true;
+        }
+      };
+
       void SetPhoneLostAlert(bool enabled) {
         if (enabled != settings.phoneLostAlert) {
           settingsChanged = true;
@@ -851,7 +862,7 @@ namespace Pinetime {
     private:
       Pinetime::Controllers::FS& fs;
 
-      static constexpr uint32_t settingsVersion = 0x001E;
+      static constexpr uint32_t settingsVersion = 0x001F;
       // Files from this version are a strict prefix of the current layout (fields are only ever
       // appended), so they load fine and just keep the defaults for the new trailing fields.
       static constexpr uint32_t settingsVersionPrefixCompatible = 0x001B;
@@ -926,6 +937,8 @@ namespace Pinetime {
         bool hydrationReminders = false;
         bool bedtimeReminder = false;
         bool phoneLostAlert = false;
+        // Indices into worldCities (components/datetime/WorldTime.h): New York, London, Tokyo, Sydney, Vienna.
+        std::array<uint8_t, 5> worldClockCities {6, 9, 23, 25, 13};
       };
 
       SettingsData settings;
