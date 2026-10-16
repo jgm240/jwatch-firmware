@@ -260,6 +260,11 @@ void SystemTask::Work() {
           GoToRunning();
           displayApp.PushMessage(Pinetime::Applications::Display::Messages::AlarmTriggered);
           break;
+        case Messages::PhoneLost:
+          if (settingsController.GetPhoneLostAlert()) {
+            displayApp.PushMessage(Pinetime::Applications::Display::Messages::PhoneLost);
+          }
+          break;
         case Messages::FindWatch:
           GoToRunning();
           displayApp.PushMessage(Pinetime::Applications::Display::Messages::FindWatch);
@@ -599,6 +604,73 @@ void SystemTask::HandleAssists() {
     displayApp.PushMessage(turn == 1 ? DisplayMessages::HapticNavLeft
                                      : (turn == 2 ? DisplayMessages::HapticNavRight : DisplayMessages::HapticNavArrive));
   }
+
+  // A route started or ended on the phone: open (or close) the Navigation app.
+  switch (nimbleController.navigation().ConsumeLifecycle()) {
+    case 1:
+      GoToRunning();
+      displayApp.PushMessage(DisplayMessages::NavigationStarted);
+      break;
+    case 2:
+      displayApp.PushMessage(DisplayMessages::NavigationStopped);
+      break;
+    default:
+      break;
+  }
+
+  // Do-not-disturb sync with the phone (the notification mode is the watch's DND).
+  auto& phoneLink = nimbleController.calendar();
+  const int requestedMode = phoneLink.ConsumePendingDnd();
+  if (requestedMode >= 0 && requestedMode <= 2) {
+    settingsController.SetNotificationStatus(static_cast<Controllers::Settings::Notification>(requestedMode));
+  }
+  phoneLink.SetDndStatus(static_cast<uint8_t>(settingsController.GetNotificationStatus()));
+
+  // Watch face editor: apply what the phone sent, and keep the readable copy current.
+  uint8_t faceConfig[Controllers::CalendarEventService::FaceConfigSize];
+  if (phoneLink.ConsumePendingFace(faceConfig)) {
+    using Settings = Controllers::Settings;
+    if (faceConfig[1] <= static_cast<uint8_t>(Pinetime::Applications::WatchFace::Astronomy)) {
+      settingsController.SetWatchFace(static_cast<Pinetime::Applications::WatchFace>(faceConfig[1]));
+    }
+    constexpr uint8_t colorCount = static_cast<uint8_t>(Settings::Colors::Pink) + 1;
+    if (faceConfig[2] < colorCount) {
+      settingsController.SetWatchFaceAccentColor(static_cast<Settings::Colors>(faceConfig[2]));
+    }
+    if (faceConfig[3] < colorCount) {
+      settingsController.SetWatchFaceSimpleColor(static_cast<Settings::Colors>(faceConfig[3]));
+    }
+    if (faceConfig[4] < colorCount) {
+      settingsController.SetPTSColorTime(static_cast<Settings::Colors>(faceConfig[4]));
+    }
+    if (faceConfig[5] < colorCount) {
+      settingsController.SetPTSColorBar(static_cast<Settings::Colors>(faceConfig[5]));
+    }
+    if (faceConfig[6] < colorCount) {
+      settingsController.SetPTSColorBG(static_cast<Settings::Colors>(faceConfig[6]));
+    }
+    if (faceConfig[7] < 16) {
+      settingsController.SetInfineatColorIndex(faceConfig[7]);
+    }
+    for (size_t i = 0; i < Settings::modularWatchFaceSlots; i++) {
+      if (faceConfig[8 + i] <= static_cast<uint8_t>(Pinetime::Applications::Widgets::ComplicationType::PhoneBattery)) {
+        settingsController.SetModularSlot(i, static_cast<Pinetime::Applications::Widgets::ComplicationType>(faceConfig[8 + i]));
+      }
+    }
+    displayApp.PushMessage(DisplayMessages::ReloadFace);
+  }
+  faceConfig[0] = 1;
+  faceConfig[1] = static_cast<uint8_t>(settingsController.GetWatchFace());
+  faceConfig[2] = static_cast<uint8_t>(settingsController.GetWatchFaceAccentColor());
+  faceConfig[3] = static_cast<uint8_t>(settingsController.GetWatchFaceSimpleColor());
+  faceConfig[4] = static_cast<uint8_t>(settingsController.GetPTSColorTime());
+  faceConfig[5] = static_cast<uint8_t>(settingsController.GetPTSColorBar());
+  faceConfig[6] = static_cast<uint8_t>(settingsController.GetPTSColorBG());
+  faceConfig[7] = static_cast<uint8_t>(settingsController.GetInfineatColorIndex());
+  for (size_t i = 0; i < Controllers::Settings::modularWatchFaceSlots; i++) {
+    faceConfig[8 + i] = static_cast<uint8_t>(settingsController.GetModularSlot(i));
+  }
+  phoneLink.SetFaceConfig(faceConfig);
 
   const int32_t shakeSpeed = motionController.CurrentShakeSpeed();
 

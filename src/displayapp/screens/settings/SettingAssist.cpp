@@ -12,7 +12,7 @@ namespace {
     }
   }
 
-  const char* const names[] = {"Smart alarm", "Stand reminders", "Haptic nav", "Shake to silence"};
+  const char* const names[] = {"Smart alarm", "Stand reminders", "Haptic nav", "Shake to silence", "Phone lost alert"};
 }
 
 SettingAssist::SettingAssist(Pinetime::Controllers::Settings& settingsController) : settingsController {settingsController} {
@@ -40,7 +40,8 @@ SettingAssist::SettingAssist(Pinetime::Controllers::Settings& settingsController
   const bool values[optionCount] = {settingsController.GetSmartAlarmEnabled(),
                                     settingsController.GetStandReminders(),
                                     settingsController.GetHapticNavigation(),
-                                    settingsController.GetShakeToSilence()};
+                                    settingsController.GetShakeToSilence(),
+                                    settingsController.GetPhoneLostAlert()};
   for (uint8_t i = 0; i < optionCount; i++) {
     checkboxes[i] = lv_checkbox_create(container, nullptr);
     lv_checkbox_set_text_static(checkboxes[i], names[i]);
@@ -73,6 +74,9 @@ void SettingAssist::Toggled(lv_obj_t* object) {
         break;
       case 3:
         settingsController.SetShakeToSilence(on);
+        break;
+      case 4:
+        settingsController.SetPhoneLostAlert(on);
         break;
     }
     return;

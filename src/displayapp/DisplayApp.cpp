@@ -104,6 +104,8 @@ namespace {
   // Turn-by-turn haptics: left = two short pulses, right = one long, arrive = short-short-long.
   constexpr Pinetime::Controllers::PatternData navLeftPattern = {2, {70, 70}, {110, 0}};
   constexpr Pinetime::Controllers::PatternData navRightPattern = {1, {350}, {0}};
+  // Phone lost: three firm pulses.
+  constexpr Pinetime::Controllers::PatternData phoneLostPattern = {3, {250, 250, 250}, {150, 150, 0}};
   constexpr Pinetime::Controllers::PatternData navArrivePattern = {3, {50, 50, 220}, {80, 80, 0}};
   // Find my watch: eight 0.4 s buzzes (about 5 s) - JWLink can re-trigger it.
   constexpr Pinetime::Controllers::PatternData findWatchPattern = {8,
@@ -692,6 +694,25 @@ void DisplayApp::Refresh() {
         break;
       case Messages::FindWatch:
         motorController.RunPattern(findWatchPattern);
+        break;
+      case Messages::PhoneLost:
+        motorController.RunPattern(phoneLostPattern);
+        break;
+      case Messages::NavigationStarted:
+        // Only take over from the watch face, never from an app the user is in.
+        if (currentApp == Apps::Clock) {
+          LoadNewScreen(Apps::Navigation, DisplayApp::FullRefreshDirections::Up);
+        }
+        break;
+      case Messages::NavigationStopped:
+        if (currentApp == Apps::Navigation) {
+          LoadNewScreen(Apps::Clock, DisplayApp::FullRefreshDirections::Down);
+        }
+        break;
+      case Messages::ReloadFace:
+        if (currentApp == Apps::Clock) {
+          LoadNewScreen(Apps::Clock, DisplayApp::FullRefreshDirections::None);
+        }
         break;
       case Messages::ShakeSilence:
         if (currentApp == Apps::Alarm && alarmController.IsAlerting()) {

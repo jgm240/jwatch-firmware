@@ -17,7 +17,7 @@ namespace Pinetime {
         void Toggled(lv_obj_t* object);
 
       private:
-        static constexpr uint8_t optionCount = 4;
+        static constexpr uint8_t optionCount = 5;
 
         Controllers::Settings& settingsController;
         lv_obj_t* checkboxes[optionCount];

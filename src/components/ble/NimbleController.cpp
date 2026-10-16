@@ -247,6 +247,10 @@ int NimbleController::OnGAPEvent(ble_gap_event* event) {
       currentTimeClient.Reset();
       alertNotificationClient.Reset();
       connectionHandle = BLE_HS_CONN_HANDLE_NONE;
+      // The link timed out (phone walked away / died) rather than being closed on purpose.
+      if (event->disconnect.reason == BLE_HS_HCI_ERR(BLE_ERR_CONN_SPVN_TMO)) {
+        systemTask.PushMessage(Pinetime::System::Messages::PhoneLost);
+      }
       if (bleController.IsConnected()) {
         bleController.Disconnect();
         fastAdvCount = 0;

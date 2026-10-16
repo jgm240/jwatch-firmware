@@ -34,6 +34,10 @@ namespace Pinetime {
         StandNudge,
         ShakeSilence,
         FindWatch,
+        NavigationStarted,
+        NavigationStopped,
+        ReloadFace,
+        PhoneLost,
       };
     }
   }

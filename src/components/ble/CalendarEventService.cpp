@@ -8,6 +8,8 @@ constexpr ble_uuid128_t CalendarEventService::serviceUuid;
 constexpr ble_uuid128_t CalendarEventService::eventCharUuid;
 constexpr ble_uuid128_t CalendarEventService::phoneBatteryCharUuid;
 constexpr ble_uuid128_t CalendarEventService::commandCharUuid;
+constexpr ble_uuid128_t CalendarEventService::dndCharUuid;
+constexpr ble_uuid128_t CalendarEventService::faceCharUuid;
 
 namespace {
   uint64_t ToUInt64(const uint8_t* data) {
@@ -33,6 +35,16 @@ CalendarEventService::CalendarEventService()
                                 .arg = this,
                                 .flags = BLE_GATT_CHR_F_WRITE,
                                 .val_handle = &commandHandle},
+                              {.uuid = &dndCharUuid.u,
+                                .access_cb = OnAccessCb,
+                                .arg = this,
+                                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_NOTIFY,
+                                .val_handle = &dndHandle},
+                              {.uuid = &faceCharUuid.u,
+                                .access_cb = OnAccessCb,
+                                .arg = this,
+                                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE,
+                                .val_handle = &faceHandle},
                               {0}},
     serviceDefinition {
       {.type = BLE_GATT_SVC_TYPE_PRIMARY, .uuid = &serviceUuid.u, .characteristics = characteristicDefinition},
@@ -49,12 +61,45 @@ int CalendarEventService::OnAccessCb(uint16_t /*connHandle*/, uint16_t /*attrHan
   return static_cast<CalendarEventService*>(arg)->OnAccess(ctxt);
 }
 
+void CalendarEventService::SetDndStatus(uint8_t status) {
+  if (status == dndStatus) {
+    return;
+  }
+  dndStatus = status;
+  ble_gatts_chr_updated(dndHandle);
+}
+
 int CalendarEventService::OnAccess(ble_gatt_access_ctxt* ctxt) {
+  if (ctxt->op == BLE_GATT_ACCESS_OP_READ_CHR) {
+    if (ble_uuid_cmp(ctxt->chr->uuid, &dndCharUuid.u) == 0) {
+      return os_mbuf_append(ctxt->om, &dndStatus, sizeof(dndStatus)) == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+    }
+    if (ble_uuid_cmp(ctxt->chr->uuid, &faceCharUuid.u) == 0) {
+      return os_mbuf_append(ctxt->om, faceConfig.data(), faceConfig.size()) == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+    }
+    return 0;
+  }
   if (ctxt->op != BLE_GATT_ACCESS_OP_WRITE_CHR) {
     return 0;
   }
 
   const size_t receivedSize = OS_MBUF_PKTLEN(ctxt->om);
+
+  if (ble_uuid_cmp(ctxt->chr->uuid, &dndCharUuid.u) == 0) {
+    uint8_t value = 0;
+    if (receivedSize >= 1 && os_mbuf_copydata(ctxt->om, 0, 1, &value) == 0 && value <= 2) {
+      pendingDnd = value;
+    }
+    return 0;
+  }
+
+  if (ble_uuid_cmp(ctxt->chr->uuid, &faceCharUuid.u) == 0) {
+    if (receivedSize >= FaceConfigSize) {
+      os_mbuf_copydata(ctxt->om, 0, FaceConfigSize, pendingFace.data());
+      facePending = pendingFace[0] == 1;
+    }
+    return 0;
+  }
 
   if (ble_uuid_cmp(ctxt->chr->uuid, &phoneBatteryCharUuid.u) == 0) {
     if (receivedSize >= 2) {

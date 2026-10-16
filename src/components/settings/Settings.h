@@ -659,6 +659,17 @@ namespace Pinetime {
         return settings.hapticNavigation;
       };
 
+      void SetPhoneLostAlert(bool enabled) {
+        if (enabled != settings.phoneLostAlert) {
+          settingsChanged = true;
+        }
+        settings.phoneLostAlert = enabled;
+      };
+
+      bool GetPhoneLostAlert() const {
+        return settings.phoneLostAlert;
+      };
+
       void SetShakeToSilence(bool enabled) {
         if (enabled != settings.shakeToSilence) {
           settingsChanged = true;
@@ -840,7 +851,7 @@ namespace Pinetime {
     private:
       Pinetime::Controllers::FS& fs;
 
-      static constexpr uint32_t settingsVersion = 0x001D;
+      static constexpr uint32_t settingsVersion = 0x001E;
       // Files from this version are a strict prefix of the current layout (fields are only ever
       // appended), so they load fine and just keep the defaults for the new trailing fields.
       static constexpr uint32_t settingsVersionPrefixCompatible = 0x001B;
@@ -914,6 +925,7 @@ namespace Pinetime {
         bool eventReminders = false;
         bool hydrationReminders = false;
         bool bedtimeReminder = false;
+        bool phoneLostAlert = false;
       };
 
       SettingsData settings;

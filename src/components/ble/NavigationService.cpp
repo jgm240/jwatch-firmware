@@ -98,6 +98,11 @@ int Pinetime::Controllers::NavigationService::OnCommand(struct ble_gatt_access_c
           pendingTurn = 2;
         }
       }
+      const bool nowActive = !newFlag.empty() && newFlag != "flag";
+      if (nowActive != active) {
+        pendingLifecycle = nowActive ? 1 : 2;
+        active = nowActive;
+      }
       m_flag = newFlag;
     } else if (ble_uuid_cmp(ctxt->chr->uuid, &navNarrativeCharUuid.u) == 0) {
       m_narrative = s;

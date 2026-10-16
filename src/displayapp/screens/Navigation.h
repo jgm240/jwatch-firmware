@@ -43,7 +43,15 @@ namespace Pinetime {
         static bool IsAvailable(Pinetime::Controllers::FS& filesystem);
 
       private:
-        lv_obj_t* imgFlag;
+        void DrawFlag(const std::string& flag);
+
+        lv_obj_t* arrowBox;
+        lv_obj_t* arrowPath;
+        lv_obj_t* arrowHead;
+        lv_obj_t* ring;
+        lv_obj_t* dot;
+        lv_point_t pathPoints[4];
+        lv_point_t headPoints[3];
         lv_obj_t* txtNarrative;
         lv_obj_t* txtManDist;
         lv_obj_t* barProgress;

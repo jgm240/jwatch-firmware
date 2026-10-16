@@ -52,6 +52,13 @@ namespace Pinetime {
         return turn;
       }
 
+      // 1 = a route just started, 2 = it ended (flag went back to empty/"flag"); clears on read.
+      uint8_t ConsumeLifecycle() {
+        uint8_t event = pendingLifecycle;
+        pendingLifecycle = 0;
+        return event;
+      }
+
     private:
       struct ble_gatt_chr_def characteristicDefinition[5];
       struct ble_gatt_svc_def serviceDefinition[2];
@@ -61,6 +68,8 @@ namespace Pinetime {
       std::string m_manDist;
       int m_progress;
       uint8_t pendingTurn = 0;
+      uint8_t pendingLifecycle = 0;
+      bool active = false;
     };
   }
 }

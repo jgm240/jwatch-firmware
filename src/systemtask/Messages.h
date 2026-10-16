@@ -31,7 +31,8 @@ namespace Pinetime {
       StartFileTransfer,
       StopFileTransfer,
       BleRadioEnableToggle,
-      FindWatch
+      FindWatch,
+      PhoneLost
     };
   }
 }
