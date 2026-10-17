@@ -129,6 +129,7 @@ void NimbleController::Init() {
   Pinetime::Controllers::Ble::BleAddress address;
   rc = ble_hs_id_copy_addr(addrType, address.data(), nullptr);
   ASSERT(rc == 0);
+  haveOriginalRandom = ble_hs_id_copy_addr(BLE_ADDR_RANDOM, originalRandom, nullptr) == 0;
 
   bleController.Address(std::move(address));
   switch (addrType) {
@@ -177,21 +178,34 @@ void NimbleController::StartAdvertising() {
     adv_params.itvl_max = 1651;
   }
 
+  static const ble_uuid16_t kindleUuids[2] = {{.u {.type = BLE_UUID_TYPE_16}, .value = 0x1812},
+                                              {.u {.type = BLE_UUID_TYPE_16}, .value = 0x180F}};
   fields.flags = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP;
-  fields.uuids16 = &HeartRateService::heartRateServiceUuid;
-  fields.num_uuids16 = 1;
-  fields.uuids16_is_complete = 1;
-  fields.uuids128 = &DfuService::serviceUuid;
-  fields.num_uuids128 = 1;
-  fields.uuids128_is_complete = 1;
-  fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
+  if (kindleMode) {
+    // A HID page-turner: generic HID appearance + HID/Battery services; the name goes in the scan response.
+    fields.appearance = 0x03C0;
+    fields.appearance_is_present = 1;
+    fields.uuids16 = kindleUuids;
+    fields.num_uuids16 = 2;
+    fields.uuids16_is_complete = 1;
+  } else {
+    fields.uuids16 = &HeartRateService::heartRateServiceUuid;
+    fields.num_uuids16 = 1;
+    fields.uuids16_is_complete = 1;
+    fields.uuids128 = &DfuService::serviceUuid;
+    fields.num_uuids128 = 1;
+    fields.uuids128_is_complete = 1;
+    fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
+  }
 
   rsp_fields.name = reinterpret_cast<const uint8_t*>(deviceName);
   rsp_fields.name_len = strlen(deviceName);
   rsp_fields.name_is_complete = 1;
-  rsp_fields.uuids16 = &HidService::hidServiceUuid;
-  rsp_fields.num_uuids16 = 1;
-  rsp_fields.uuids16_is_complete = 1;
+  if (!kindleMode) {
+    rsp_fields.uuids16 = &HidService::hidServiceUuid;
+    rsp_fields.num_uuids16 = 1;
+    rsp_fields.uuids16_is_complete = 1;
+  }
 
   int rc;
   rc = ble_gap_adv_set_fields(&fields);
@@ -200,7 +214,28 @@ void NimbleController::StartAdvertising() {
   rc = ble_gap_adv_rsp_set_fields(&rsp_fields);
   ASSERT(rc == 0);
 
-  rc = ble_gap_adv_start(addrType, NULL, 2000, &adv_params, GAPEventCallback, this);
+  // Kindle mode advertises from its own random static address (the watch's address with its low byte changed), so
+  // the phone's saved address never matches and it can't take the single connection slot.
+  if (kindleMode != addressIsKindle) {
+    ble_addr_t target = {.type = BLE_ADDR_RANDOM, .val = {0}};
+    bool apply = true;
+    if (kindleMode) {
+      const auto& own = bleController.Address();
+      std::memcpy(target.val, own.data(), sizeof(target.val));
+      target.val[0] ^= 0x5A;
+      target.val[5] |= 0xC0;
+    } else if (haveOriginalRandom) {
+      std::memcpy(target.val, originalRandom, sizeof(target.val));
+    } else {
+      apply = false; // normal mode uses the public address; nothing to restore
+    }
+    if (apply) {
+      ble_hs_id_set_rnd(target.val);
+    }
+    addressIsKindle = kindleMode;
+  }
+
+  rc = ble_gap_adv_start(kindleMode ? BLE_OWN_ADDR_RANDOM : addrType, NULL, 2000, &adv_params, GAPEventCallback, this);
   ASSERT(rc == 0);
 }
 
@@ -229,7 +264,12 @@ int NimbleController::OnGAPEvent(ble_gap_event* event) {
         StartAdvertising();
       } else {
         connectionHandle = event->connect.conn_handle;
+        connectionIsKindle = kindleMode;
         bleController.Connect();
+        if (connectionIsKindle) {
+          // A remote asks the host to secure the link; the Kindle then pairs (Just Works) or re-encrypts.
+          ble_gap_security_initiate(connectionHandle);
+        }
         systemTask.PushMessage(Pinetime::System::Messages::BleConnected);
         // Service discovery is deferred via systemtask
       }
@@ -240,7 +280,8 @@ int NimbleController::OnGAPEvent(ble_gap_event* event) {
       NRF_LOG_INFO("Disconnect event : BLE_GAP_EVENT_DISCONNECT");
       NRF_LOG_INFO("disconnect reason=%d", event->disconnect.reason);
 
-      if (event->disconnect.conn.sec_state.bonded) {
+      // Only the phone's bond is ever written to flash; a Kindle bond lives in RAM until the watch restarts.
+      if (event->disconnect.conn.sec_state.bonded && !connectionIsKindle) {
         PersistBond(event->disconnect.conn);
       }
 
@@ -248,9 +289,10 @@ int NimbleController::OnGAPEvent(ble_gap_event* event) {
       alertNotificationClient.Reset();
       connectionHandle = BLE_HS_CONN_HANDLE_NONE;
       // The link timed out (phone walked away / died) rather than being closed on purpose.
-      if (event->disconnect.reason == BLE_HS_HCI_ERR(BLE_ERR_CONN_SPVN_TMO)) {
+      if (event->disconnect.reason == BLE_HS_HCI_ERR(BLE_ERR_CONN_SPVN_TMO) && !connectionIsKindle) {
         systemTask.PushMessage(Pinetime::System::Messages::PhoneLost);
       }
+      connectionIsKindle = false;
       if (bleController.IsConnected()) {
         bleController.Disconnect();
         fastAdvCount = 0;
@@ -282,7 +324,7 @@ int NimbleController::OnGAPEvent(ble_gap_event* event) {
       if (event->enc_change.status == 0) {
         struct ble_gap_conn_desc desc;
         ble_gap_conn_find(event->enc_change.conn_handle, &desc);
-        if (desc.sec_state.bonded) {
+        if (desc.sec_state.bonded && !connectionIsKindle) {
           PersistBond(desc);
         }
 
@@ -421,7 +463,7 @@ int NimbleController::OnGAPEvent(ble_gap_event* event) {
 }
 
 void NimbleController::StartDiscovery() {
-  if (connectionHandle != BLE_HS_CONN_HANDLE_NONE) {
+  if (connectionHandle != BLE_HS_CONN_HANDLE_NONE && !connectionIsKindle) {
     serviceDiscovery.StartDiscovery(connectionHandle);
   }
 }
@@ -465,6 +507,46 @@ void NimbleController::MakeDiscoverable() {
     ble_gap_terminate(connectionHandle, BLE_ERR_REM_USER_CONN_TERM);
   } else {
     ble_gap_adv_stop(); // harmless if we weren't advertising
+    StartAdvertising();
+  }
+}
+
+void NimbleController::EnterKindleMode() {
+  if (kindleMode) {
+    return;
+  }
+  kindleMode = true;
+  HidService::SetKindleMode(true);
+  ble_svc_gap_device_appearance_set(0x03C0);
+  // A remote has no screen or keyboard: pair with Just Works.
+  ble_hs_cfg.sm_io_cap = BLE_HS_IO_NO_INPUT_OUTPUT;
+  ble_hs_cfg.sm_mitm = 0;
+  fastAdvCount = 0;
+  holdFastAdv = true;
+  if (connectionHandle != BLE_HS_CONN_HANDLE_NONE) {
+    // The disconnect handler restarts advertising, which now switches to the Kindle address and data.
+    ble_gap_terminate(connectionHandle, BLE_ERR_REM_USER_CONN_TERM);
+  } else if (bleController.IsRadioEnabled()) {
+    ble_gap_adv_stop(); // harmless if we weren't advertising
+    StartAdvertising();
+  }
+}
+
+void NimbleController::ExitKindleMode() {
+  if (!kindleMode) {
+    return;
+  }
+  kindleMode = false;
+  HidService::SetKindleMode(false);
+  ble_svc_gap_device_appearance_set(0xC2);
+  ble_hs_cfg.sm_io_cap = MYNEWT_VAL(BLE_SM_IO_CAP);
+  ble_hs_cfg.sm_mitm = MYNEWT_VAL(BLE_SM_MITM);
+  holdFastAdv = false;
+  fastAdvCount = 0;
+  if (connectionHandle != BLE_HS_CONN_HANDLE_NONE) {
+    ble_gap_terminate(connectionHandle, BLE_ERR_REM_USER_CONN_TERM);
+  } else if (bleController.IsRadioEnabled()) {
+    ble_gap_adv_stop();
     StartAdvertising();
   }
 }

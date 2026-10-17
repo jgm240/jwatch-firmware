@@ -117,6 +117,15 @@ namespace Pinetime {
       void EnableRadio();
       void DisableRadio();
 
+      // Kindle Click support: while on, the phone link is dropped and the watch advertises under a different
+      // Bluetooth address as a HID page-turner remote (appearance, HID service, Amazon vendor/product ID).
+      // The phone's pairing is never touched; leaving Kindle mode brings the normal link back.
+      void EnterKindleMode();
+      void ExitKindleMode();
+      bool InKindleMode() const {
+        return kindleMode;
+      }
+
     private:
       void PersistBond(struct ble_gap_conn_desc& desc);
       void RestoreBond();
@@ -155,6 +164,11 @@ namespace Pinetime {
       uint16_t connectionHandle = BLE_HS_CONN_HANDLE_NONE;
       uint8_t fastAdvCount = 0;
       bool holdFastAdv = false;
+      bool kindleMode = false;
+      bool connectionIsKindle = false;
+      bool addressIsKindle = false;
+      bool haveOriginalRandom = false;
+      uint8_t originalRandom[6] = {0};
       uint8_t bondId[16] = {0};
     };
 

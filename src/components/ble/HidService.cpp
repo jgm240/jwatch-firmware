@@ -39,6 +39,29 @@ namespace {
     0xC0,       // End Collection
   };
 
+  // Report map used while the Kindle Click app is open: the media-key collection above (unchanged) plus a keyboard
+  // (Report ID 2: modifiers, reserved, six key slots) and a consumer collection (Report ID 3: Power, Brightness
+  // Increment, Brightness Decrement).
+  constexpr uint8_t kindleReportMapData[] = {
+    0x05, 0x0C, 0x09, 0x01, 0xA1, 0x01, 0x85, 0x01, 0x15, 0x00, 0x25, 0x01, 0x75, 0x01, 0x95, 0x06, 0x09, 0xCD, 0x09, 0xB5, 0x09,
+    0xB6, 0x09, 0xE9, 0x09, 0xEA, 0x09, 0xE2, 0x81, 0x02, 0x95, 0x01, 0x75, 0x02, 0x81, 0x03, 0xC0,
+    // Keyboard
+    0x05, 0x01, // Usage Page (Generic Desktop)
+    0x09, 0x06, // Usage (Keyboard)
+    0xA1, 0x01, // Collection (Application)
+    0x85, 0x02, //   Report ID (2)
+    0x05, 0x07, //   Usage Page (Keyboard)
+    0x19, 0xE0, //   Usage Minimum (Left Control)
+    0x29, 0xE7, //   Usage Maximum (Right GUI)
+    0x15, 0x00, 0x25, 0x01, 0x75, 0x01, 0x95, 0x08, 0x81, 0x02, // modifier bits
+    0x95, 0x01, 0x75, 0x08, 0x81, 0x01,                         // reserved byte
+    0x95, 0x06, 0x75, 0x08, 0x15, 0x00, 0x25, 0x65, 0x05, 0x07, 0x19, 0x00, 0x29, 0x65, 0x81, 0x00, // key array
+    0xC0,
+    // Consumer: Power, Brightness+, Brightness-
+    0x05, 0x0C, 0x09, 0x01, 0xA1, 0x01, 0x85, 0x03, 0x15, 0x00, 0x25, 0x01, 0x75, 0x01, 0x95, 0x03, 0x09, 0x30, 0x09, 0x6F, 0x09,
+    0x70, 0x81, 0x02, 0x95, 0x01, 0x75, 0x05, 0x81, 0x03, 0xC0,
+  };
+
   int OnHidInformationRequestedCb(uint16_t /*conn_handle*/, uint16_t attr_handle, ble_gatt_access_ctxt* ctxt, void* arg) {
     return static_cast<HidService*>(arg)->OnHidInformationRequested(attr_handle, ctxt);
   }
@@ -53,6 +76,24 @@ namespace {
 
   int OnReportReferenceRequestedCb(uint16_t /*conn_handle*/, uint16_t attr_handle, ble_gatt_access_ctxt* ctxt, void* arg) {
     return static_cast<HidService*>(arg)->OnReportReferenceRequested(attr_handle, ctxt);
+  }
+
+  int OnKeyboardReportCb(uint16_t /*conn_handle*/, uint16_t attr_handle, ble_gatt_access_ctxt* ctxt, void* arg) {
+    return static_cast<HidService*>(arg)->OnKeyboardReportRequested(attr_handle, ctxt);
+  }
+
+  int OnKindleReportCb(uint16_t /*conn_handle*/, uint16_t attr_handle, ble_gatt_access_ctxt* ctxt, void* arg) {
+    return static_cast<HidService*>(arg)->OnKindleReportRequested(attr_handle, ctxt);
+  }
+
+  int OnReportReference2Cb(uint16_t /*conn_handle*/, uint16_t /*attr_handle*/, ble_gatt_access_ctxt* ctxt, void* /*arg*/) {
+    const uint8_t buffer[2] = {2, 1}; // Report ID 2, input
+    return os_mbuf_append(ctxt->om, buffer, sizeof(buffer)) == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+  }
+
+  int OnReportReference3Cb(uint16_t /*conn_handle*/, uint16_t /*attr_handle*/, ble_gatt_access_ctxt* ctxt, void* /*arg*/) {
+    const uint8_t buffer[2] = {3, 1}; // Report ID 3, input
+    return os_mbuf_append(ctxt->om, buffer, sizeof(buffer)) == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
   }
 
   int OnControlPointWriteCb(uint16_t /*conn_handle*/, uint16_t attr_handle, ble_gatt_access_ctxt* ctxt, void* arg) {
@@ -70,6 +111,18 @@ HidService::HidService(NimbleController& nimble)
                         .att_flags = BLE_ATT_F_READ,
                         .min_key_size = 0,
                         .access_cb = OnReportReferenceRequestedCb,
+                        .arg = this},
+                       {0}},
+    keyboardDescriptors {{.uuid = &reportReferenceUuid.u,
+                          .att_flags = BLE_ATT_F_READ,
+                          .min_key_size = 0,
+                          .access_cb = OnReportReference2Cb,
+                          .arg = this},
+                         {0}},
+    kindleDescriptors {{.uuid = &reportReferenceUuid.u,
+                        .att_flags = BLE_ATT_F_READ,
+                        .min_key_size = 0,
+                        .access_cb = OnReportReference3Cb,
                         .arg = this},
                        {0}},
     characteristicDefinition {
@@ -95,6 +148,18 @@ HidService::HidService(NimbleController& nimble)
        .arg = this,
        .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE_NO_RSP,
        .val_handle = &protocolModeHandle},
+      {.uuid = &reportUuid.u,
+       .access_cb = OnKeyboardReportCb,
+       .arg = this,
+       .descriptors = keyboardDescriptors,
+       .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
+       .val_handle = &keyboardHandle},
+      {.uuid = &reportUuid.u,
+       .access_cb = OnKindleReportCb,
+       .arg = this,
+       .descriptors = kindleDescriptors,
+       .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
+       .val_handle = &kindleHandle},
       {0},
     },
     serviceDefinition {
@@ -126,7 +191,8 @@ int HidService::OnReportMapRequested(uint16_t attributeHandle, ble_gatt_access_c
   if (attributeHandle != reportMapHandle) {
     return 0;
   }
-  int res = os_mbuf_append(context->om, reportMapData, sizeof(reportMapData));
+  int res = kindleMode ? os_mbuf_append(context->om, kindleReportMapData, sizeof(kindleReportMapData))
+                       : os_mbuf_append(context->om, reportMapData, sizeof(reportMapData));
   return (res == 0) ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
 }
 
@@ -176,14 +242,58 @@ void HidService::SendConsumerReport(uint8_t bitmask) {
   ble_gattc_notify_custom(connectionHandle, reportHandle, om);
 }
 
+int HidService::OnKeyboardReportRequested(uint16_t attributeHandle, ble_gatt_access_ctxt* context) {
+  if (attributeHandle != keyboardHandle) {
+    return 0;
+  }
+  int res = os_mbuf_append(context->om, keyboardReport, sizeof(keyboardReport));
+  return (res == 0) ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+}
+
+int HidService::OnKindleReportRequested(uint16_t attributeHandle, ble_gatt_access_ctxt* context) {
+  if (attributeHandle != kindleHandle) {
+    return 0;
+  }
+  int res = os_mbuf_append(context->om, &kindleReport, sizeof(kindleReport));
+  return (res == 0) ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+}
+
+void HidService::SendKeyboardReport(uint8_t keycode) {
+  const uint16_t connectionHandle = nimble.connHandle();
+  if (!keyboardNotificationEnabled || connectionHandle == 0 || connectionHandle == BLE_HS_CONN_HANDLE_NONE) {
+    return;
+  }
+  keyboardReport[2] = keycode;
+  auto* om = ble_hs_mbuf_from_flat(keyboardReport, sizeof(keyboardReport));
+  ble_gattc_notify_custom(connectionHandle, keyboardHandle, om);
+}
+
+void HidService::SendKindleConsumerReport(uint8_t bitmask) {
+  const uint16_t connectionHandle = nimble.connHandle();
+  if (!kindleNotificationEnabled || connectionHandle == 0 || connectionHandle == BLE_HS_CONN_HANDLE_NONE) {
+    return;
+  }
+  kindleReport = bitmask;
+  auto* om = ble_hs_mbuf_from_flat(&kindleReport, sizeof(kindleReport));
+  ble_gattc_notify_custom(connectionHandle, kindleHandle, om);
+}
+
 void HidService::SubscribeNotification(uint16_t attributeHandle) {
   if (attributeHandle == reportHandle) {
     reportNotificationEnabled = true;
+  } else if (attributeHandle == keyboardHandle) {
+    keyboardNotificationEnabled = true;
+  } else if (attributeHandle == kindleHandle) {
+    kindleNotificationEnabled = true;
   }
 }
 
 void HidService::UnsubscribeNotification(uint16_t attributeHandle) {
   if (attributeHandle == reportHandle) {
     reportNotificationEnabled = false;
+  } else if (attributeHandle == keyboardHandle) {
+    keyboardNotificationEnabled = false;
+  } else if (attributeHandle == kindleHandle) {
+    kindleNotificationEnabled = false;
   }
 }

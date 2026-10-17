@@ -34,6 +34,27 @@ namespace Pinetime {
 
       void SendConsumerReport(uint8_t bitmask);
 
+      // Kindle Click (see KindleClick app): a keyboard report (PageUp/PageDown) and a second consumer report
+      // (Power, Brightness+/-). These reports are only described in the report map while Kindle mode is on, so
+      // the media-key remote keeps exactly the descriptor it always had.
+      static constexpr uint8_t keyPageUp = 0x4B;
+      static constexpr uint8_t keyPageDown = 0x4E;
+      static constexpr uint8_t kindlePower = 1 << 0;
+      static constexpr uint8_t kindleBrightnessUp = 1 << 1;
+      static constexpr uint8_t kindleBrightnessDown = 1 << 2;
+
+      void SendKeyboardReport(uint8_t keycode); // 0 releases
+      void SendKindleConsumerReport(uint8_t bitmask);
+      int OnKeyboardReportRequested(uint16_t attributeHandle, ble_gatt_access_ctxt* context);
+      int OnKindleReportRequested(uint16_t attributeHandle, ble_gatt_access_ctxt* context);
+
+      static void SetKindleMode(bool enabled) {
+        kindleMode = enabled;
+      }
+      static bool KindleMode() {
+        return kindleMode;
+      }
+
       void SubscribeNotification(uint16_t attributeHandle);
       void UnsubscribeNotification(uint16_t attributeHandle);
 
@@ -57,8 +78,12 @@ namespace Pinetime {
       static constexpr ble_uuid16_t protocolModeUuid {.u {.type = BLE_UUID_TYPE_16}, .value = protocolModeId};
       static constexpr ble_uuid16_t reportReferenceUuid {.u {.type = BLE_UUID_TYPE_16}, .value = reportReferenceId};
 
+      static inline bool kindleMode = false;
+
       struct ble_gatt_dsc_def reportDescriptors[2];
-      struct ble_gatt_chr_def characteristicDefinition[6];
+      struct ble_gatt_dsc_def keyboardDescriptors[2];
+      struct ble_gatt_dsc_def kindleDescriptors[2];
+      struct ble_gatt_chr_def characteristicDefinition[8];
       struct ble_gatt_svc_def serviceDefinition[2];
 
       uint16_t hidInformationHandle {0};
@@ -66,10 +91,16 @@ namespace Pinetime {
       uint16_t reportHandle {0};
       uint16_t hidControlPointHandle {0};
       uint16_t protocolModeHandle {0};
+      uint16_t keyboardHandle {0};
+      uint16_t kindleHandle {0};
 
       uint8_t currentReport {0};
       uint8_t protocolMode {1};
       bool reportNotificationEnabled {false};
+      bool keyboardNotificationEnabled {false};
+      bool kindleNotificationEnabled {false};
+      uint8_t keyboardReport[8] {0};
+      uint8_t kindleReport {0};
     };
   }
 }
