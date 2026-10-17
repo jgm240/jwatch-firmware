@@ -180,6 +180,12 @@ void NimbleController::StartAdvertising() {
 
   static const ble_uuid16_t kindleUuids[2] = {{.u {.type = BLE_UUID_TYPE_16}, .value = 0x1812},
                                               {.u {.type = BLE_UUID_TYPE_16}, .value = 0x180F}};
+  // Manufacturer Specific Data (AD type 0xFF): Amazon's Bluetooth SIG company ID (0x0171, little-endian)
+  // followed by the Click's product ID (0x0443, little-endian). The Kindle's own Bluetooth daemon
+  // (acsbtfd) reads this straight from the scan report - before any connection - to decide whether to
+  // show a discovered device at all; our GATT-level PnP ID (Device Information Service) is invisible
+  // to that check since it needs an active connection to read, which the Kindle won't attempt otherwise.
+  static const uint8_t kindleMfgData[4] = {0x71, 0x01, 0x43, 0x04};
   fields.flags = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP;
   if (kindleMode) {
     // A HID page-turner: generic HID appearance + HID/Battery services; the name goes in the scan response.
@@ -188,6 +194,8 @@ void NimbleController::StartAdvertising() {
     fields.uuids16 = kindleUuids;
     fields.num_uuids16 = 2;
     fields.uuids16_is_complete = 1;
+    fields.mfg_data = kindleMfgData;
+    fields.mfg_data_len = sizeof(kindleMfgData);
   } else {
     fields.uuids16 = &HeartRateService::heartRateServiceUuid;
     fields.num_uuids16 = 1;
