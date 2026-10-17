@@ -31,8 +31,8 @@ KindleClick::KindleClick(Controllers::NimbleController& nimble, const Controller
     lv_coord_t x, y, w, h;
   };
   const Spec specs[5] = {
-    {"< Back", 0, 58, 118, 126},
-    {"Next >", 122, 58, 118, 126},
+    {"< Back", 0, 58, 118, 84},
+    {"Next >", 122, 58, 118, 84},
     {"Dim", 0, 192, 76, 46},
     {"Sleep", 82, 192, 76, 46},
     {"Bright", 164, 192, 76, 46},
@@ -46,6 +46,14 @@ KindleClick::KindleClick(Controllers::NimbleController& nimble, const Controller
     lv_label_set_text_static(lv_label_create(buttons[i], nullptr), specs[i].text);
   }
   lv_obj_set_style_local_bg_color(buttons[1], LV_BTN_PART_MAIN, LV_STATE_DEFAULT, Colors::highlight);
+
+  // Announce: restart the Bluetooth announcements (and hang up a stale Kindle link) so the Kindle can find the watch.
+  announceButton = lv_btn_create(lv_scr_act(), nullptr);
+  announceButton->user_data = this;
+  lv_obj_set_event_cb(announceButton, ButtonHandler);
+  lv_obj_set_size(announceButton, 240, 40);
+  lv_obj_set_pos(announceButton, 0, 146);
+  lv_label_set_text_static(lv_label_create(announceButton, nullptr), "Announce");
 
   // Stay awake while the app is open: closing it (screen timeout included) hands the link back to the phone.
   wakeLock.Lock();
@@ -63,6 +71,15 @@ KindleClick::~KindleClick() {
 
 void KindleClick::Press(lv_obj_t* button) {
   Release(); // never leave a previous key down
+  if (button == announceButton) {
+    nimble.MakeDiscoverable();
+    announcingTicks = 40; // show "Announcing..." for ~2 s
+    lv_label_set_text_static(statusLabel, "Announcing...");
+    lv_label_set_text_static(hintLabel, "Pair from the Kindle");
+    lv_obj_realign(statusLabel);
+    lv_obj_realign(hintLabel);
+    return;
+  }
   auto& hid = nimble.hid();
   if (button == buttons[static_cast<uint8_t>(Key::Back)]) {
     hid.SendKeyboardReport(Controllers::HidService::keyPageUp);
@@ -99,6 +116,10 @@ void KindleClick::Release() {
 
 void KindleClick::Refresh() {
   Release(); // key-up one tick (50 ms) after key-down
+  if (announcingTicks > 0) {
+    announcingTicks--;
+    return;
+  }
   if (++ticks < 10) {
     return;
   }

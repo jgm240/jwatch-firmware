@@ -35,10 +35,12 @@ namespace Pinetime {
         bool releasePending = false;
         bool pressedConsumer = false;
         uint8_t ticks = 0;
+        uint8_t announcingTicks = 0;
 
         lv_obj_t* statusLabel;
         lv_obj_t* hintLabel;
         lv_obj_t* buttons[5];
+        lv_obj_t* announceButton;
         lv_task_t* taskRefresh;
       };
     }
