@@ -31,10 +31,11 @@ int DeviceInformationService::OnDeviceInfoRequested(struct ble_gatt_access_ctxt*
 
   switch (ble_uuid_u16(ctxt->chr->uuid)) {
     case manufacturerNameId:
-      str = manufacturerName;
+      // While the Kindle Click app is open the watch presents itself as the remote it stands in for.
+      str = HidService::KindleMode() ? "Amazon" : manufacturerName;
       break;
     case modelNumberId:
-      str = modelNumber;
+      str = HidService::KindleMode() ? "Kindle Click" : modelNumber;
       break;
     case serialNumberId:
       str = serialNumber;
