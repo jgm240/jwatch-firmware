@@ -397,6 +397,7 @@ list(APPEND SOURCE_FILES
         displayapp/screens/Workout.cpp
         displayapp/screens/Reconnect.cpp
         displayapp/screens/KindleClick.cpp
+        displayapp/screens/SmartStack.cpp
         displayapp/screens/settings/FaceEditor.cpp
         displayapp/screens/settings/SettingWorldClock.cpp
         components/datetime/WorldTime.cpp

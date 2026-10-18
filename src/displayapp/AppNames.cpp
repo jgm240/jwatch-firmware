@@ -48,6 +48,8 @@ const char* Pinetime::Applications::AppNameFor(Apps app) {
       return "Reconnect";
     case Apps::KindleClick:
       return "Kindle Click";
+    case Apps::SmartStack:
+      return "Smart Stack";
     case Apps::Mindfulness:
       return "Mindfulness";
     case Apps::ActivityRings:

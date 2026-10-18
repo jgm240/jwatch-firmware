@@ -89,6 +89,7 @@
 #include "displayapp/screens/Workout.h"
 #include "displayapp/screens/Reconnect.h"
 #include "displayapp/screens/KindleClick.h"
+#include "displayapp/screens/SmartStack.h"
 #include "displayapp/screens/Mindfulness.h"
 #include "displayapp/screens/ActivityRings.h"
 #include "displayapp/screens/SleepTracking.h"
@@ -600,6 +601,9 @@ void DisplayApp::Refresh() {
                 case TouchEvents::SwipeRight:
                   LoadNewScreen(Apps::QuickSettings, DisplayApp::FullRefreshDirections::RightAnim);
                   break;
+                case TouchEvents::SwipeLeft:
+                  LoadNewScreen(Apps::SmartStack, DisplayApp::FullRefreshDirections::LeftAnim);
+                  break;
                 case TouchEvents::LongTap:
                   ArmWatchFaceGesture();
                   break;
@@ -950,6 +954,9 @@ void DisplayApp::LoadScreen(Apps app, DisplayApp::FullRefreshDirections directio
       break;
     case Apps::Settings:
       currentScreen = std::make_unique<Screens::Settings>(this, settingsController);
+      break;
+    case Apps::SmartStack:
+      currentScreen = std::make_unique<Screens::SmartStack>(controllers);
       break;
     case Apps::SettingWatchFace: {
       std::array<Screens::SettingWatchFace::Item, UserWatchFaceTypes::Count> items;
