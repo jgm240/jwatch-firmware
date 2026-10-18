@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <lvgl/lvgl.h>
 #include "displayapp/InfiniTimeTheme.h"
+
+extern lv_font_t jetbrains_mono_bold_20;
 #include "components/battery/BatteryController.h"
 #include "components/ble/CalendarEventService.h"
 #include "components/ble/MusicService.h"
@@ -259,7 +261,9 @@ SmartStackCard::SmartStackCard(SmartStackCardType type, const AppControllers& co
   lv_obj_align(iconLabel, lv_scr_act(), LV_ALIGN_IN_TOP_MID, 0, 16);
 
   valueLabel = lv_label_create(lv_scr_act(), nullptr);
-  lv_obj_set_style_local_text_font(valueLabel, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_42);
+  // jetbrains_mono_42 only has a handful of glyphs (digits, ": . + - % ° C F K-M f i k m t") - fine
+  // for a bare clock face, but most cards here show real words, so use a font with the full alphabet.
+  lv_obj_set_style_local_text_font(valueLabel, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_bold_20);
   lv_label_set_long_mode(valueLabel, LV_LABEL_LONG_DOT);
   lv_obj_set_width(valueLabel, LV_HOR_RES - 20);
   lv_label_set_align(valueLabel, LV_LABEL_ALIGN_CENTER);
