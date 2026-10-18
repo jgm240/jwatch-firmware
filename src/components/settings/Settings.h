@@ -659,6 +659,17 @@ namespace Pinetime {
         return settings.hapticNavigation;
       };
 
+      bool GetSmartStackCardEnabled(size_t index) const {
+        return index < settings.smartStackEnabled.size() ? settings.smartStackEnabled[index] : true;
+      };
+
+      void SetSmartStackCardEnabled(size_t index, bool enabled) {
+        if (index < settings.smartStackEnabled.size() && settings.smartStackEnabled[index] != enabled) {
+          settings.smartStackEnabled[index] = enabled;
+          settingsChanged = true;
+        }
+      };
+
       uint8_t GetWorldClockCity(size_t slot) const {
         return slot < settings.worldClockCities.size() ? settings.worldClockCities[slot] : 0;
       };
@@ -862,7 +873,7 @@ namespace Pinetime {
     private:
       Pinetime::Controllers::FS& fs;
 
-      static constexpr uint32_t settingsVersion = 0x001F;
+      static constexpr uint32_t settingsVersion = 0x0020;
       // Files from this version are a strict prefix of the current layout (fields are only ever
       // appended), so they load fine and just keep the defaults for the new trailing fields.
       static constexpr uint32_t settingsVersionPrefixCompatible = 0x001B;
@@ -939,6 +950,9 @@ namespace Pinetime {
         bool phoneLostAlert = false;
         // Indices into worldCities (components/datetime/WorldTime.h): New York, London, Tokyo, Sydney, Vienna.
         std::array<uint8_t, 5> worldClockCities {6, 9, 23, 25, 13};
+        // One bit per SmartStackCardType (see SmartStack.h); sized with a few spares for future cards.
+        // All on by default - a freshly-added bit in an upgraded settings file reads as 1 (on) too.
+        std::bitset<16> smartStackEnabled {0xFFFF};
       };
 
       SettingsData settings;

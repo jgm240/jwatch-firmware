@@ -67,6 +67,7 @@ namespace Pinetime {
       Reconnect,
       KindleClick,
       SmartStack,
+      SettingSmartStack,
       Mindfulness,
       ActivityRings,
       SleepTracking,

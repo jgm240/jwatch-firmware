@@ -90,6 +90,7 @@
 #include "displayapp/screens/Reconnect.h"
 #include "displayapp/screens/KindleClick.h"
 #include "displayapp/screens/SmartStack.h"
+#include "displayapp/screens/settings/SettingSmartStack.h"
 #include "displayapp/screens/Mindfulness.h"
 #include "displayapp/screens/ActivityRings.h"
 #include "displayapp/screens/SleepTracking.h"
@@ -957,6 +958,9 @@ void DisplayApp::LoadScreen(Apps app, DisplayApp::FullRefreshDirections directio
       break;
     case Apps::SmartStack:
       currentScreen = std::make_unique<Screens::SmartStack>(controllers);
+      break;
+    case Apps::SettingSmartStack:
+      currentScreen = std::make_unique<Screens::SettingSmartStack>(this, settingsController);
       break;
     case Apps::SettingWatchFace: {
       std::array<Screens::SettingWatchFace::Item, UserWatchFaceTypes::Count> items;

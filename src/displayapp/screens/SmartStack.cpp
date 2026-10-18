@@ -249,10 +249,43 @@ namespace {
         isRelevant = true; // always a safe, always-available fallback card
         return t;
       }
+      case SmartStackCardType::FitnessRings: {
+        t.icon = Symbols::tachometer;
+        const uint32_t calories = c.healthController.GetCaloriesToday();
+        const uint32_t activeMinutes = c.healthController.GetActiveMinutesToday();
+        const uint32_t exerciseGoal = c.settingsController.GetExerciseGoalMinutes();
+        const uint32_t standHours = c.healthController.GetStandHoursToday();
+        std::snprintf(t.value, sizeof(t.value), "%lu/%lu/%lu", static_cast<unsigned long>(activeMinutes),
+                      static_cast<unsigned long>(standHours), static_cast<unsigned long>(calories));
+        std::snprintf(t.sub, sizeof(t.sub), "min / hrs stand / kcal");
+        isRelevant = exerciseGoal > 0 && activeMinutes * 100 / exerciseGoal >= 80 && activeMinutes < exerciseGoal;
+        return t;
+      }
+      case SmartStackCardType::Timer: {
+        t.icon = Symbols::hourGlass;
+        const auto state = c.timer.GetTimerState();
+        if (!state.has_value() || state->expired) {
+          std::snprintf(t.value, sizeof(t.value), "No timer");
+          return t;
+        }
+        const auto totalSeconds = std::chrono::duration_cast<std::chrono::seconds>(state->distanceToExpiry).count();
+        std::snprintf(t.value, sizeof(t.value), "%02lld:%02lld", static_cast<long long>(totalSeconds / 60),
+                      static_cast<long long>(totalSeconds % 60));
+        std::snprintf(t.sub, sizeof(t.sub), "Timer");
+        isRelevant = totalSeconds <= 60;
+        return t;
+      }
     }
     return t;
   }
 }
+
+const std::array<const char*, Pinetime::Applications::Screens::smartStackCardCount>
+  Pinetime::Applications::Screens::smartStackCardNames = {
+    "Alarm",      "Workout",       "Now playing", "Next event", "Countdown",     "Notifications", "Watch battery",
+    "Phone battery", "Steps",      "Heart rate",  "Weather",    "World clock",   "Sun",           "Date",
+    "Fitness hexagons", "Timer",
+};
 
 SmartStackCard::SmartStackCard(SmartStackCardType type, const AppControllers& controllers) : type {type}, controllers {controllers} {
   iconLabel = lv_label_create(lv_scr_act(), nullptr);
@@ -299,8 +332,8 @@ void SmartStackCard::Refresh() {
 }
 
 namespace {
-  // Most time-sensitive card type first; boosted further (see BuildOrderedScreens) when it actually
-  // has something relevant to show right now.
+  // Most time-sensitive card type first; boosted further (see the constructor) when it actually has
+  // something relevant to show right now.
   constexpr std::array<int, smartStackCardCount> basePriority = {
     90, // Alarm
     85, // Workout
@@ -316,45 +349,63 @@ namespace {
     5,  // WorldClock
     8,  // Sun
     1,  // Date
+    35, // FitnessRings
+    45, // Timer
   };
 }
 
-auto SmartStack::BuildOrderedScreens() {
+SmartStack::SmartStack(const AppControllers& controllers) : controllers {controllers}, app {controllers.displayApp} {
   std::array<int, smartStackCardCount> score {};
-  for (size_t i = 0; i < smartStackCardCount; i++) {
-    order[i] = static_cast<SmartStackCardType>(i);
-    bool relevant = false;
-    DescribeCard(order[i], controllers, relevant);
-    score[i] = basePriority[i] + (relevant ? 100 : 0);
-  }
-
   std::array<size_t, smartStackCardCount> indices {};
+  size_t enabledCount = 0;
   for (size_t i = 0; i < smartStackCardCount; i++) {
-    indices[i] = i;
+    if (!controllers.settingsController.GetSmartStackCardEnabled(i)) {
+      continue;
+    }
+    bool relevant = false;
+    DescribeCard(static_cast<SmartStackCardType>(i), controllers, relevant);
+    score[i] = basePriority[i] + (relevant ? 100 : 0);
+    indices[enabledCount++] = i;
   }
-  std::sort(indices.begin(), indices.end(), [&score](size_t a, size_t b) { return score[a] > score[b]; });
-
-  std::array<SmartStackCardType, smartStackCardCount> sorted {};
-  for (size_t i = 0; i < smartStackCardCount; i++) {
-    sorted[i] = order[indices[i]];
+  // A disabled-everything settings file shouldn't leave the stack with nothing to show.
+  if (enabledCount == 0) {
+    indices[0] = static_cast<size_t>(SmartStackCardType::Date);
+    enabledCount = 1;
   }
-  order = sorted;
 
-  std::array<std::function<std::unique_ptr<Screen>()>, smartStackCardCount> screenList;
-  for (size_t i = 0; i < screenList.size(); i++) {
-    screenList[i] = [this, i]() -> std::unique_ptr<Screen> { return std::make_unique<SmartStackCard>(order[i], controllers); };
+  std::sort(indices.begin(), indices.begin() + enabledCount, [&score](size_t a, size_t b) { return score[a] > score[b]; });
+  activeCount = static_cast<uint8_t>(enabledCount);
+  for (size_t i = 0; i < enabledCount; i++) {
+    order[i] = static_cast<SmartStackCardType>(indices[i]);
   }
-  return screenList;
-}
 
-SmartStack::SmartStack(const AppControllers& controllers)
-  : controllers {controllers}, screens {controllers.displayApp, 0, BuildOrderedScreens(), ScreenListModes::RightLeft} {
+  Show(0);
 }
 
 SmartStack::~SmartStack() {
+  current.reset();
   lv_obj_clean(lv_scr_act());
 }
 
+void SmartStack::Show(uint8_t newIndex) {
+  index = newIndex;
+  current.reset(); // destroy the old card's LVGL objects before the new one creates its own
+  current = std::make_unique<SmartStackCard>(order[index], controllers);
+}
+
 bool SmartStack::OnTouchEvent(TouchEvents event) {
-  return screens.OnTouchEvent(event);
+  if (current->OnTouchEvent(event)) {
+    return true;
+  }
+  if (event == TouchEvents::SwipeLeft && index + 1 < activeCount) {
+    app->SetFullRefresh(DisplayApp::FullRefreshDirections::None);
+    Show(index + 1);
+    return true;
+  }
+  if (event == TouchEvents::SwipeRight && index > 0) {
+    app->SetFullRefresh(DisplayApp::FullRefreshDirections::None);
+    Show(index - 1);
+    return true;
+  }
+  return false;
 }

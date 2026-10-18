@@ -73,7 +73,7 @@ namespace Pinetime {
           {Symbols::list, "SPI-NOR", Apps::SettingSpiNor},
 
           {Symbols::clock, "World clock", Apps::SettingWorldClock},
-          {"", "", Apps::None},
+          {Symbols::list, "Smart Stack", Apps::SettingSmartStack},
           {"", "", Apps::None},
           {"", "", Apps::None},
         }};

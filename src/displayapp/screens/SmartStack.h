@@ -2,12 +2,12 @@
 
 #include <array>
 #include <cstdint>
+#include <memory>
 #include <lvgl/lvgl.h>
 
 #include "displayapp/apps/Apps.h"
 #include "displayapp/Controllers.h"
 #include "displayapp/screens/Screen.h"
-#include "displayapp/screens/ScreenList.h"
 #include "displayapp/screens/Symbols.h"
 
 namespace Pinetime {
@@ -32,8 +32,12 @@ namespace Pinetime {
         WorldClock,
         Sun,
         Date,
+        FitnessRings,
+        Timer,
       };
-      static constexpr size_t smartStackCardCount = static_cast<size_t>(SmartStackCardType::Date) + 1;
+      static constexpr size_t smartStackCardCount = static_cast<size_t>(SmartStackCardType::Timer) + 1;
+      // Short name shown in Settings > Smart Stack, in the same order as SmartStackCardType.
+      extern const std::array<const char*, smartStackCardCount> smartStackCardNames;
 
       class SmartStackCard : public Screen {
       public:
@@ -58,7 +62,9 @@ namespace Pinetime {
       };
 
       // Swipeable stack of SmartStackCard pages, ordered by relevance (most useful card first) at
-      // the moment the stack is opened - it doesn't reshuffle while you're browsing it.
+      // the moment the stack is opened - it doesn't reshuffle while you're browsing it. Cards turned
+      // off in Settings > Smart Stack are left out entirely, so this paginates itself at a size
+      // decided at runtime rather than using the (compile-time-sized) ScreenList other apps use.
       class SmartStack : public Screen {
       public:
         explicit SmartStack(const AppControllers& controllers);
@@ -67,14 +73,14 @@ namespace Pinetime {
         bool OnTouchEvent(TouchEvents event) override;
 
       private:
-        // Scores every card type (most time-sensitive base priority, boosted if currently relevant),
-        // sorts by score into `order`, and builds the ScreenList's page factories in that order.
-        auto BuildOrderedScreens();
+        void Show(uint8_t index);
 
         const AppControllers& controllers;
+        DisplayApp* app;
         std::array<SmartStackCardType, smartStackCardCount> order {};
-
-        ScreenList<smartStackCardCount> screens;
+        uint8_t activeCount = 0;
+        uint8_t index = 0;
+        std::unique_ptr<Screen> current;
       };
     }
 
