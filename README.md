@@ -26,7 +26,7 @@ etc.
 
 # Flashing
 
-Use Gadgetbridge on Android, InfiniTimeOrg/InfiniLink or jgm240/JWLink on iOS, Watchmate or Siglo on Linux for flashing
+Use Gadgetbridge or jgm240/JWLink-android on Android, InfiniTimeOrg/InfiniLink or jgm240/JWLink on iOS, Watchmate or Siglo on Linux for flashing
 
 # Licenses
 
