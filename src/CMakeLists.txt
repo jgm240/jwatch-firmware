@@ -391,6 +391,7 @@ list(APPEND SOURCE_FILES
         displayapp/screens/AppList.cpp
         displayapp/screens/WorldClock.cpp
         displayapp/screens/School.cpp
+        displayapp/screens/JwafApp.cpp
         displayapp/screens/Camera.cpp
         displayapp/screens/settings/SettingAssist.cpp
         displayapp/screens/settings/SettingReminders.cpp

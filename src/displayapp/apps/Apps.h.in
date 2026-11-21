@@ -60,6 +60,7 @@ namespace Pinetime {
       FileBrowser,
       WorldClock,
       School,
+      JwafApp,
       Camera,
       SettingAssist,
       SettingReminders,

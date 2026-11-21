@@ -83,6 +83,7 @@
 #include "displayapp/screens/ActivityHistory.h"
 #include "displayapp/screens/WorldClock.h"
 #include "displayapp/screens/School.h"
+#include "displayapp/screens/JwafApp.h"
 #include "displayapp/screens/Camera.h"
 #include "displayapp/screens/settings/SettingAssist.h"
 #include "displayapp/screens/settings/SettingReminders.h"
