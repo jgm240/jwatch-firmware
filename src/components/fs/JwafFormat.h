@@ -10,18 +10,18 @@
 // lines, the same shape as a static info card.
 //
 // Wire layout (little-endian, fields not null-terminated unless noted):
-//   [0..28]  magic, exactly kJwafMagic (29 bytes) - any file not starting with this is
+//   [0..27]  magic, exactly kJwafMagic (28 bytes) - any file not starting with this is
 //            rejected outright, whether it's the wrong file type or just corrupted.
-//   [29]     formatVersion - must equal kJwafFormatVersion for now.
-//   [30]     titleLength (0..TitleMaxLength)
-//   [31]     lineCount (0..MaxLines)
-//   [32..]   titleLength bytes of title text (ASCII), then for each line:
+//   [28]     formatVersion - must equal kJwafFormatVersion for now.
+//   [29]     titleLength (0..TitleMaxLength)
+//   [30]     lineCount (0..MaxLines)
+//   [31..]   titleLength bytes of title text (ASCII), then for each line:
 //              1 byte lineLength (0..LineMaxLength) + that many bytes of ASCII text.
 namespace Pinetime {
   namespace Controllers {
     namespace JwafFormat {
       inline constexpr char kJwafMagic[] = "JWAF-PINETIME-APPFILE-CHKTXT";
-      inline constexpr size_t kMagicLength = sizeof(kJwafMagic) - 1; // 29, excludes the implicit '\0'
+      inline constexpr size_t kMagicLength = sizeof(kJwafMagic) - 1; // 28, excludes the implicit '\0'
       inline constexpr uint8_t kFormatVersion = 1;
 
       inline constexpr uint8_t TitleMaxLength = 24;
