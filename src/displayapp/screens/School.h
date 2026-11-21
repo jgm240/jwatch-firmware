@@ -31,8 +31,13 @@ namespace Pinetime {
         static constexpr uint8_t MaxDisplayedEvents = Controllers::CalendarEventService::MaxEvents;
 
         lv_obj_t* noEventsLabel = nullptr;
-        std::array<lv_obj_t*, MaxDisplayedEvents> timeLabels {};
+        // Each event is a small rounded card - background panel, colored left accent bar for
+        // its type, bold title line, muted time/day line below - rather than a single plain
+        // row of text. Mirrors the card style SSC's own desktop dashboard (parent.html) uses
+        // for the same lesson/exam/homework entries, just sized down for a 240x240 screen.
+        std::array<lv_obj_t*, MaxDisplayedEvents> cards {};
         std::array<lv_obj_t*, MaxDisplayedEvents> titleLabels {};
+        std::array<lv_obj_t*, MaxDisplayedEvents> timeLabels {};
 
         lv_task_t* taskRefresh;
       };
