@@ -390,13 +390,12 @@ list(APPEND SOURCE_FILES
         displayapp/screens/ListApplicationList.cpp
         displayapp/screens/AppList.cpp
         displayapp/screens/WorldClock.cpp
-        displayapp/screens/Calendar.cpp
+        displayapp/screens/School.cpp
         displayapp/screens/Camera.cpp
         displayapp/screens/settings/SettingAssist.cpp
         displayapp/screens/settings/SettingReminders.cpp
         displayapp/screens/Workout.cpp
         displayapp/screens/Reconnect.cpp
-        displayapp/screens/KindleClick.cpp
         displayapp/screens/SmartStack.cpp
         displayapp/screens/settings/SettingSmartStack.cpp
         displayapp/screens/settings/FaceEditor.cpp

@@ -38,16 +38,14 @@ const char* Pinetime::Applications::AppNameFor(Apps app) {
       return "Weather";
     case Apps::WorldClock:
       return "World Clock";
-    case Apps::Calendar:
-      return "Calendar";
+    case Apps::School:
+      return "School";
     case Apps::Camera:
       return "Camera";
     case Apps::Workout:
       return "Workout";
     case Apps::Reconnect:
       return "Reconnect";
-    case Apps::KindleClick:
-      return "Kindle Click";
     case Apps::SmartStack:
       return "Smart Stack";
     case Apps::SettingSmartStack:

@@ -1,5 +1,4 @@
 #include "components/ble/DeviceInformationService.h"
-#include "components/ble/HidService.h"
 
 using namespace Pinetime::Controllers;
 
@@ -10,7 +9,6 @@ constexpr ble_uuid16_t DeviceInformationService::fwRevisionUuid;
 constexpr ble_uuid16_t DeviceInformationService::deviceInfoUuid;
 constexpr ble_uuid16_t DeviceInformationService::hwRevisionUuid;
 constexpr ble_uuid16_t DeviceInformationService::swRevisionUuid;
-constexpr ble_uuid16_t DeviceInformationService::pnpIdUuid;
 
 int DeviceInformationCallback(uint16_t /*conn_handle*/, uint16_t /*attr_handle*/, struct ble_gatt_access_ctxt* ctxt, void* arg) {
   auto deviceInformationService = static_cast<DeviceInformationService*>(arg);
@@ -31,11 +29,10 @@ int DeviceInformationService::OnDeviceInfoRequested(struct ble_gatt_access_ctxt*
 
   switch (ble_uuid_u16(ctxt->chr->uuid)) {
     case manufacturerNameId:
-      // While the Kindle Click app is open the watch presents itself as the remote it stands in for.
-      str = HidService::KindleMode() ? "Amazon" : manufacturerName;
+      str = manufacturerName;
       break;
     case modelNumberId:
-      str = HidService::KindleMode() ? "Kindle Click" : modelNumber;
+      str = modelNumber;
       break;
     case serialNumberId:
       str = serialNumber;
@@ -49,15 +46,6 @@ int DeviceInformationService::OnDeviceInfoRequested(struct ble_gatt_access_ctxt*
     case swRevisionId:
       str = swRevision;
       break;
-    case pnpIdId: {
-      // Only answered while the Kindle Click app is open: the Kindle recognizes its page-turner remote by this
-      // Bluetooth SIG vendor ID (Amazon, 0x0171) and product ID 0x0443, version 1.0.
-      if (!HidService::KindleMode()) {
-        return BLE_ATT_ERR_READ_NOT_PERMITTED;
-      }
-      const uint8_t pnpId[7] = {0x01, 0x71, 0x01, 0x43, 0x04, 0x00, 0x01};
-      return os_mbuf_append(ctxt->om, pnpId, sizeof(pnpId)) == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-    }
     default:
       return BLE_ATT_ERR_UNLIKELY;
   }
@@ -99,12 +87,6 @@ DeviceInformationService::DeviceInformationService()
                               },
                               {
                                 .uuid = &swRevisionUuid.u,
-                                .access_cb = DeviceInformationCallback,
-                                .arg = this,
-                                .flags = BLE_GATT_CHR_F_READ,
-                              },
-                              {
-                                .uuid = &pnpIdUuid.u,
                                 .access_cb = DeviceInformationCallback,
                                 .arg = this,
                                 .flags = BLE_GATT_CHR_F_READ,

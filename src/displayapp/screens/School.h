@@ -13,10 +13,14 @@ namespace Pinetime {
   namespace Applications {
     namespace Screens {
 
-      class Calendar : public Screen {
+      // Shows the next few days of synced events (see CalendarEventService): school lessons, exams
+      // ("Exam: ..." titles) and homework due dates ("HW: ..." titles) all arrive over the same
+      // channel, prefixed by whatever pushed them (e.g. SSC's `ssc.py watch sync`); this screen just
+      // tells them apart by that prefix to color-code and to show a day label once it's not today.
+      class School : public Screen {
       public:
-        Calendar(Controllers::CalendarEventService& calendarEventService, Controllers::DateTime& dateTimeController);
-        ~Calendar() override;
+        School(Controllers::CalendarEventService& calendarEventService, Controllers::DateTime& dateTimeController);
+        ~School() override;
 
         void Refresh() override;
 
@@ -30,19 +34,17 @@ namespace Pinetime {
         std::array<lv_obj_t*, MaxDisplayedEvents> timeLabels {};
         std::array<lv_obj_t*, MaxDisplayedEvents> titleLabels {};
 
-        uint8_t lastDisplayedCount = 0xff;
-
         lv_task_t* taskRefresh;
       };
     }
 
     template <>
-    struct AppTraits<Apps::Calendar> {
-      static constexpr Apps app = Apps::Calendar;
+    struct AppTraits<Apps::School> {
+      static constexpr Apps app = Apps::School;
       static constexpr const char* icon = Screens::Symbols::calendar;
 
       static Screens::Screen* Create(AppControllers& controllers) {
-        return new Screens::Calendar(*controllers.calendarService, controllers.dateTimeController);
+        return new Screens::School(*controllers.calendarService, controllers.dateTimeController);
       };
 
       static bool IsAvailable(Pinetime::Controllers::FS& /*filesystem*/) {
