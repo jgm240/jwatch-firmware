@@ -1,4 +1,5 @@
 #include "displayapp/DisplayApp.h"
+#include <cstring>
 #include <libraries/log/nrf_log.h>
 #include "displayapp/screens/HeartRate.h"
 #include "displayapp/screens/Motion.h"
@@ -214,10 +215,16 @@ DisplayApp::DisplayApp(Drivers::St7789& lcd,
                  nullptr} {
 }
 
-void DisplayApp::Start(System::BootErrors error) {
+void DisplayApp::Start(System::BootErrors error, const char* crashMessageIn) {
   msgQueue = xQueueCreate(queueSize, itemSize);
 
   bootError = error;
+  if (crashMessageIn != nullptr) {
+    strncpy(crashMessage, crashMessageIn, crashMessageCap - 1);
+    crashMessage[crashMessageCap - 1] = '\0';
+  } else {
+    crashMessage[0] = '\0';
+  }
 
   if (pdPASS != xTaskCreate(DisplayApp::Process, "displayapp", 800, this, 0, &taskHandle)) {
     APP_ERROR_HANDLER(NRF_ERROR_NO_MEM);
@@ -229,7 +236,7 @@ void DisplayApp::Process(void* instance) {
   NRF_LOG_INFO("displayapp task started!");
   app->Init();
 
-  if (app->bootError == System::BootErrors::TouchController) {
+  if (app->bootError == System::BootErrors::TouchController || app->bootError == System::BootErrors::FirmwareCrash) {
     app->LoadNewScreen(Apps::Error, DisplayApp::FullRefreshDirections::None);
   } else if (app->settingsController.GetPasscodeEnabled()) {
     app->LoadNewScreen(Apps::PasscodeLock, DisplayApp::FullRefreshDirections::None);
@@ -894,7 +901,7 @@ void DisplayApp::LoadScreen(Apps app, DisplayApp::FullRefreshDirections directio
       settingsController.SetAppMenu(0);
     } break;
     case Apps::Error:
-      currentScreen = std::make_unique<Screens::Error>(bootError);
+      currentScreen = std::make_unique<Screens::Error>(bootError, crashMessage);
       break;
 
     case Apps::FirmwareValidation:

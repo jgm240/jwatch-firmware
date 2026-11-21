@@ -5,6 +5,7 @@ namespace Pinetime {
     enum class BootErrors {
       None,
       TouchController,
+      FirmwareCrash,
     };
   }
 }

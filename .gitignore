@@ -16,6 +16,7 @@ tools
 *.a
 *.so
 *.s
+!src/components/sandbox/AppSandboxTrampoline.S
 *.hex
 *.bin
 !bootloader/bootloader-5.0.4.bin

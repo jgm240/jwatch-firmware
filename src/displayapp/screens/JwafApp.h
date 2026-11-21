@@ -10,6 +10,7 @@
 #include "displayapp/Controllers.h"
 #include "components/fs/FS.h"
 #include "components/fs/JwafFormat.h"
+#include "components/sandbox/AppSandbox.h"
 
 namespace Pinetime {
   namespace Applications {
@@ -36,8 +37,21 @@ namespace Pinetime {
 
         void LoadFileList();
         void OpenFile(const char* name);
+        void OpenTextFile(const uint8_t* buffer, size_t size);
+        void OpenCodeFile(const uint8_t* buffer, size_t size);
+        void ShowViewingChrome(const char* title); // "< Apps" back row + title label, shared by both kinds
         void ShowList();
         void ShowError(const char* message);
+
+        // Big enough for either kind of file's largest possible body - the code variant's
+        // (AppSandbox::CodeAreaSize) dwarfs the text variant's, but both are computed here
+        // rather than just assumed. Too large for the display-app task's own stack (800
+        // *words* total - see DisplayApp::Start), hence a class member instead of a local.
+        static constexpr size_t TextBodyMaxSize =
+          Controllers::JwafFormat::TitleMaxLength + Controllers::JwafFormat::MaxLines * (1 + Controllers::JwafFormat::LineMaxLength);
+        static constexpr size_t CodeBodyMaxSize = 2 + Controllers::AppSandbox::CodeAreaSize;
+        static constexpr size_t FileBufferSize =
+          Controllers::JwafFormat::kHeaderSize + (TextBodyMaxSize > CodeBodyMaxSize ? TextBodyMaxSize : CodeBodyMaxSize);
 
         Controllers::FS& filesystem;
 
@@ -46,6 +60,7 @@ namespace Pinetime {
         std::array<FileEntry, MaxFiles> files {};
         int fileCount = 0;
         std::array<lv_obj_t*, MaxFiles> buttonObjects {};
+        std::array<uint8_t, FileBufferSize> fileBuffer {};
 
         lv_obj_t* list = nullptr;
         lv_obj_t* titleLabel = nullptr;

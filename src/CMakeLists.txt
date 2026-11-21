@@ -545,6 +545,10 @@ list(APPEND SOURCE_FILES
         components/stopwatch/StopWatchController.cpp
         components/alarm/AlarmController.cpp
         components/fs/FS.cpp
+        components/sandbox/AppSandbox.cpp
+        components/sandbox/AppSandboxTrampoline.S
+        components/crashlog/CrashLog.cpp
+        components/crashlog/FaultHandlers.cpp
         drivers/Cst816s.cpp
         FreeRTOS/port.c
         FreeRTOS/port_cmsis_systick.c

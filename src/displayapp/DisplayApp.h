@@ -71,7 +71,7 @@ namespace Pinetime {
                  Pinetime::Controllers::TouchHandler& touchHandler,
                  Pinetime::Controllers::FS& filesystem,
                  Pinetime::Drivers::SpiNorFlash& spiNorFlash);
-      void Start(System::BootErrors error);
+      void Start(System::BootErrors error, const char* crashMessage = nullptr);
       void PushMessage(Display::Messages msg);
 
       void StartApp(Apps app, DisplayApp::FullRefreshDirections direction);
@@ -144,6 +144,8 @@ namespace Pinetime {
       Apps nextApp = Apps::None;
       DisplayApp::FullRefreshDirections nextDirection;
       System::BootErrors bootError;
+      static constexpr size_t crashMessageCap = 80; // matches CrashLog::MessageMaxLength
+      char crashMessage[crashMessageCap] = {};
       void ApplyBrightness();
 
       // Warm-tint overlay on lv_layer_top(), shown/hidden based on Settings' Night Mode

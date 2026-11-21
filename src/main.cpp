@@ -37,6 +37,7 @@
 #include "components/heartrate/HeartRateController.h"
 #include "components/stopwatch/StopWatchController.h"
 #include "components/fs/FS.h"
+#include "components/crashlog/CrashLog.h"
 #include "drivers/Spi.h"
 #include "drivers/SpiMaster.h"
 #include "drivers/SpiNorFlash.h"
@@ -235,6 +236,9 @@ void RTC0_IRQHandler(void) {
 
 void WDT_IRQHandler(void) {
   nrf_wdt_event_clear(NRF_WDT_EVENT_TIMEOUT);
+  // Fires a few microseconds before the watchdog's own forced reset on an actual hang -
+  // see components/crashlog/CrashLog.h and SystemTask::Work() (which enables this interrupt).
+  Pinetime::System::CrashLog::RecordAndReset("Watchdog timeout (unresponsive)");
 }
 
 void npl_freertos_hw_set_isr(int irqn, void (*addr)()) {

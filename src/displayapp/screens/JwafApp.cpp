@@ -6,17 +6,16 @@
 #include "displayapp/InfiniTimeTheme.h"
 
 using namespace Pinetime::Applications::Screens;
+using Pinetime::Controllers::AppSandbox;
 using Pinetime::Controllers::JwafFormat::kHeaderSize;
-using Pinetime::Controllers::JwafFormat::kFormatVersion;
+using Pinetime::Controllers::JwafFormat::kFormatVersionCode;
+using Pinetime::Controllers::JwafFormat::kFormatVersionText;
 using Pinetime::Controllers::JwafFormat::LineMaxLength;
 using Pinetime::Controllers::JwafFormat::MaxLines;
 using Pinetime::Controllers::JwafFormat::TitleMaxLength;
 
 namespace {
   constexpr const char* appsDir = "/apps";
-  // Biggest a file is allowed to be once header limits are maxed out: title + every line at
-  // its max length, each with its own 1-byte length prefix.
-  constexpr size_t kMaxFileSize = kHeaderSize + TitleMaxLength + MaxLines * (1 + LineMaxLength);
 
   void eventHandler(lv_obj_t* obj, lv_event_t event) {
     auto* screen = static_cast<JwafApp*>(obj->user_data);
@@ -137,8 +136,7 @@ void JwafApp::OpenFile(const char* name) {
     return;
   }
 
-  uint8_t buffer[kMaxFileSize];
-  int readLen = filesystem.FileRead(&file, buffer, sizeof(buffer));
+  int readLen = filesystem.FileRead(&file, fileBuffer.data(), fileBuffer.size());
   filesystem.FileClose(&file);
 
   if (readLen < static_cast<int>(kHeaderSize)) {
@@ -146,16 +144,25 @@ void JwafApp::OpenFile(const char* name) {
     return;
   }
   size_t size = static_cast<size_t>(readLen);
+  const uint8_t* buffer = fileBuffer.data();
 
   if (!Pinetime::Controllers::JwafFormat::HasValidMagic(buffer, size)) {
     ShowError("Not a valid JWAF file (bad header).");
     return;
   }
   using Pinetime::Controllers::JwafFormat::kMagicLength;
-  if (buffer[kMagicLength] != kFormatVersion) {
+  uint8_t formatVersion = buffer[kMagicLength];
+  if (formatVersion == kFormatVersionText) {
+    OpenTextFile(buffer, size);
+  } else if (formatVersion == kFormatVersionCode) {
+    OpenCodeFile(buffer, size);
+  } else {
     ShowError("This JWAF file needs a newer firmware.");
-    return;
   }
+}
+
+void JwafApp::OpenTextFile(const uint8_t* buffer, size_t size) {
+  using Pinetime::Controllers::JwafFormat::kMagicLength;
 
   uint8_t titleLen = buffer[kMagicLength + 1];
   uint8_t lineCount = buffer[kMagicLength + 2];
@@ -184,22 +191,7 @@ void JwafApp::OpenFile(const char* name) {
     offset += static_cast<size_t>(consumed);
   }
 
-  mode = Mode::Viewing;
-  lv_obj_clean(lv_scr_act());
-  list = nullptr;
-  errorLabel = nullptr;
-
-  lv_obj_t* back = lv_list_add_btn(lv_scr_act(), nullptr, "< Apps");
-  lv_obj_set_size(back, LV_HOR_RES, 30);
-  lv_obj_align(back, lv_scr_act(), LV_ALIGN_IN_TOP_MID, 0, 0);
-  StyleListButton(back);
-  back->user_data = this;
-  lv_obj_set_event_cb(back, eventHandler);
-  buttonObjects[0] = back;
-
-  titleLabel = lv_label_create(lv_scr_act(), nullptr);
-  lv_label_set_text(titleLabel, titleText);
-  lv_obj_align(titleLabel, lv_scr_act(), LV_ALIGN_IN_TOP_MID, 0, 35);
+  ShowViewingChrome(titleText);
 
   lv_coord_t rowY = 65;
   for (uint8_t i = 0; i < lineCount; i++) {
@@ -211,6 +203,65 @@ void JwafApp::OpenFile(const char* name) {
     lineLabels[i] = lbl;
     rowY += 25;
   }
+}
+
+void JwafApp::OpenCodeFile(const uint8_t* buffer, size_t size) {
+  using Pinetime::Controllers::JwafFormat::kMagicLength;
+
+  size_t offset = kMagicLength + 1;
+  if (offset + 2 > size) {
+    ShowError("JWAF file is corrupt (truncated code header).");
+    return;
+  }
+  uint16_t codeSize = static_cast<uint16_t>(buffer[offset]) | (static_cast<uint16_t>(buffer[offset + 1]) << 8);
+  offset += 2;
+
+  if (codeSize > AppSandbox::CodeAreaSize) {
+    ShowError("This app's code is too large for the sandbox slot.");
+    return;
+  }
+  if (offset + codeSize > size) {
+    ShowError("JWAF file is corrupt (truncated code).");
+    return;
+  }
+
+  char output[128];
+  auto result = AppSandbox::Run(buffer + offset, codeSize, output, sizeof(output));
+  if (result == AppSandbox::Result::CodeTooLarge) {
+    ShowError("This app's code is too large for the sandbox slot.");
+    return;
+  }
+  // A fault during Run() resets the watch instead of returning here (see FaultHandlers.cpp),
+  // so reaching this point means the app actually finished normally.
+
+  ShowViewingChrome("Result");
+
+  lv_obj_t* lbl = lv_label_create(lv_scr_act(), nullptr);
+  lv_label_set_long_mode(lbl, LV_LABEL_LONG_BREAK);
+  lv_obj_set_width(lbl, LV_HOR_RES - 20);
+  lv_label_set_text(lbl, output);
+  lv_obj_align(lbl, lv_scr_act(), LV_ALIGN_IN_TOP_LEFT, 10, 65);
+  lineLabels[0] = lbl;
+}
+
+void JwafApp::ShowViewingChrome(const char* title) {
+  mode = Mode::Viewing;
+  lv_obj_clean(lv_scr_act());
+  list = nullptr;
+  errorLabel = nullptr;
+  lineLabels.fill(nullptr);
+
+  lv_obj_t* back = lv_list_add_btn(lv_scr_act(), nullptr, "< Apps");
+  lv_obj_set_size(back, LV_HOR_RES, 30);
+  lv_obj_align(back, lv_scr_act(), LV_ALIGN_IN_TOP_MID, 0, 0);
+  StyleListButton(back);
+  back->user_data = this;
+  lv_obj_set_event_cb(back, eventHandler);
+  buttonObjects[0] = back;
+
+  titleLabel = lv_label_create(lv_scr_act(), nullptr);
+  lv_label_set_text(titleLabel, title);
+  lv_obj_align(titleLabel, lv_scr_act(), LV_ALIGN_IN_TOP_MID, 0, 35);
 }
 
 void JwafApp::OnEvent(lv_obj_t* obj, lv_event_t event) {

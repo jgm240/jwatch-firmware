@@ -48,6 +48,22 @@ SECTIONS
   } > RAM
 } INSERT AFTER .bss
 
+/* AppSandbox's RAM slot (components/sandbox/AppSandbox.cpp) needs 8192-byte alignment so the
+ * MPU can address it as one region. A plain `alignas(8192)` on the object would ask the
+ * ordinary .bss stream to insert that much padding wherever it happens to fall, which throws
+ * off nrf_common.ld's own manual "__bss_start__ - __data_start__" flash-budget check further
+ * down (it would count that padding as if it were .data). A dedicated section placed after
+ * .noinit sidesteps that: the padding this needs now lands here, not inside .bss/.data.
+ */
+SECTIONS
+{
+  . = ALIGN(8192);
+  .app_sandbox_slot (NOLOAD):
+  {
+    *(.app_sandbox_slot)
+  } > RAM
+} INSERT AFTER .noinit
+
 SECTIONS
 {
   . = ALIGN(4);

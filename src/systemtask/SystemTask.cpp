@@ -20,6 +20,7 @@
 #include "drivers/PinMap.h"
 #include "main.h"
 #include "BootErrors.h"
+#include "components/crashlog/CrashLog.h"
 
 #include <memory>
 
@@ -113,10 +114,32 @@ void SystemTask::Process(void* instance) {
 
 void SystemTask::Work() {
   BootErrors bootError = BootErrors::None;
+  char crashMessage[CrashLog::MessageMaxLength] = {};
+
+  // Route MemManage/BusFault/UsageFault to their own handlers (see components/crashlog/
+  // FaultHandlers.cpp) instead of letting them escalate to a generic HardFault - purely for a
+  // more specific crash message, since all of them end up doing the same thing either way.
+  SCB->SHCSR |= SCB_SHCSR_MEMFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk;
 
   watchdog.Setup(7, Drivers::Watchdog::SleepBehaviour::Run, Drivers::Watchdog::HaltBehaviour::Pause);
   watchdog.Start();
-  NRF_LOG_INFO("Last reset reason : %s", Pinetime::Drivers::ResetReasonToString(watchdog.GetResetReason()));
+  // Fires a few microseconds before the watchdog's own forced reset on an actual hang - just
+  // enough time to leave a generic message (see WDT_IRQHandler); best-effort only, see its
+  // comment for when this can't fire at all.
+  NRF_WDT->INTENSET = WDT_INTENSET_TIMEOUT_Msk;
+  NVIC_EnableIRQ(WDT_IRQn);
+
+  auto resetReason = watchdog.GetResetReason();
+  NRF_LOG_INFO("Last reset reason : %s", Pinetime::Drivers::ResetReasonToString(resetReason));
+  bool expectedCrashReset = resetReason == Drivers::Watchdog::ResetReason::SoftReset ||
+                             resetReason == Drivers::Watchdog::ResetReason::Watchdog ||
+                             resetReason == Drivers::Watchdog::ResetReason::CpuLockup;
+  if (expectedCrashReset && CrashLog::TakePending(crashMessage, sizeof(crashMessage))) {
+    bootError = BootErrors::FirmwareCrash;
+  } else {
+    CrashLog::TakePending(crashMessage, sizeof(crashMessage)); // clears any stale record
+  }
+
   if (!nrfx_gpiote_is_init()) {
     nrfx_gpiote_init();
   }
@@ -158,7 +181,7 @@ void SystemTask::Work() {
   displayApp.Register(&nimbleController.navigation());
   displayApp.Register(&nimbleController.hid());
   displayApp.Register(&nimbleController.calendar());
-  displayApp.Start(bootError);
+  displayApp.Start(bootError, crashMessage);
 
   heartRateSensor.Init();
   heartRateSensor.Disable();
